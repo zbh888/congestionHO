@@ -30,10 +30,12 @@ class UE(Base):
         self.oracle = oracle
 
         self.messageQ = simpy.Store(env)
-        self.cpus = simpy.Resource(env, 1)
         self.state = ACTIVE
         # This is an object 'UE_condition'
         self.condition = None
+
+        # Logs
+        self.serving_satellite_history = []
 
         # Running Process
         env.process(self.init())
@@ -103,6 +105,7 @@ class UE(Base):
                 # Cleanup for the UE
                 self.state = ACTIVE
                 self.serving_satellite = self.satellites[data['from']]
+                self.serving_satellite_history.append(data['from'])
                 self.condition = None
 
     def determine_if_access(self):

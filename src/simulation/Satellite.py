@@ -50,7 +50,6 @@ class Satellite(Base):
 
         self.counter = counter(self.DURATION)
         self.messageQ = simpy.Store(env)
-        self.cpus = simpy.Resource(env, 1)
 
         # Running Process
         self.env.process(self.init())

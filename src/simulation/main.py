@@ -14,6 +14,7 @@ def initial_assignment(UEss, Satss, assignment):
             assert (len(possible_satellites) > 0)
             satid = random.choice(possible_satellites)
             ue.serving_satellite = Satss[satid]
+            ue.serving_satellite_history.append(satid)
 
 
 def monitor_timestamp(env):
