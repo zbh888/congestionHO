@@ -23,7 +23,7 @@ class Satellite_template:
         self.cosd = cosd
 
 
-def load_scenario(feasible):
+def load_scenario():
     UEs = []
     satellites = []
 

@@ -2,6 +2,7 @@ import sys
 from Load import *
 from UE import *
 from Satellite import *
+from Oracle import *
 import time
 
 def initial_assignment(UEss, Satss, assignment):
@@ -23,12 +24,20 @@ def monitor_timestamp(env):
 
 
 if __name__ == "__main__":
-    start = time.time()
+    # configuration
+    oracle_mode = True
     random.seed(10)
-    UEs_template, satellites_template, C = load_scenario(feasible=True)
+
+    # Loading scenarios
+    beginning = time.time()
+    UEs_template, satellites_template, C = load_scenario()
     DURATION = C.shape[2]
     env = simpy.Environment()
 
+    oracle = None
+    if oracle_mode:
+        oracle = Oracle()
+        
     UEs = {}
     for ue_template in UEs_template:
         ID = ue_template.ID
@@ -38,6 +47,7 @@ if __name__ == "__main__":
                 position_x=ue_template.x,
                 position_y=ue_template.y,
                 coverage_info=C,
+                oracle = oracle,
                 env=env
             )
         else:
@@ -67,9 +77,9 @@ if __name__ == "__main__":
 
     for satid in Satellites:
         Satellites[satid].UEs = UEs
-        Satellites[satid].satellites = Satellites
-    end = time.time()
-    print(f"Loading scenario in the simulation takes {end - start}")
+        Satellites[satid].satellites = Satellites    
+        
+    print(f"Loading scenario in the simulation takes {time.time() - beginning}")
     # ========= UE, SAT objectives are ready =========
     initial_assignment(UEs, Satellites, None)
 

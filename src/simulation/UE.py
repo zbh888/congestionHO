@@ -12,6 +12,7 @@ class UE(Base):
                  position_x,
                  position_y,
                  coverage_info,
+                 oracle,
                  env):
 
         # Config Initialization
@@ -26,6 +27,7 @@ class UE(Base):
         self.DURATION = coverage_info.shape[2]
         self.serving_satellite = None
         self.satellites = None
+        self.oracle = oracle
 
         self.messageQ = simpy.Store(env)
         self.cpus = simpy.Resource(env, 1)
