@@ -22,7 +22,7 @@ class Oracle:
                         elif self.satellite_sequence[ueid][-1] != satid:
                             self.satellite_sequence[ueid].append(satid)
 
-    def query_next_satellite(ueid, serving_satellite_id):
+    def query_next_satellite(self, ueid, serving_satellite_id):
         array = self.satellite_sequence[ueid]
         for index, satid in enumerate(array):
             if serving_satellite_id == satid:
@@ -35,4 +35,8 @@ class Oracle:
             # does not find ueid should be served by serving_satellite_id
             # maybe out of sync
             return -2 
+
+    def query_init_satellite(self, ueid):
+        return self.satellite_sequence[ueid][0]
+
         
