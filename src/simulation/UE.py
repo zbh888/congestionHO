@@ -5,6 +5,7 @@ import json
 import numpy as np
 import random
 import simpy
+import copy
 
 class UE(Base):
     def __init__(self,
@@ -121,22 +122,58 @@ class UE(Base):
             else:
                 return satid
 
+    # This will use orcale if applicable
     def decide_best_action(self, available_conditions, left_conditions):
-        time = self.env.now
-        sat_id = -1
-        if len(left_conditions) == 0:
-            condition = random.choice(available_conditions)
-            sat_id = condition.satid
-        else:
-            prob = 0.5
-            if random.random() < prob:
-                condition = random.choice(available_conditions)
-                sat_id = condition.satid
-        return sat_id
+        if self.oracle is not None:
+            targetid = self.oracle.query_next_satellite(self.identity, self.serving_satellite.identity)
 
-    def select_candidates(self, candidates):
-        if len(candidates) > NUMBER_CANDIDATE:
-            selected_candidates = random.sample(candidates, NUMBER_CANDIDATE)
-            return selected_candidates
+        if self.oracle is not None and targetid != -1:
+            found = False
+            for condition in available_conditions:
+                if targetid == condition.satid:
+                    found = True
+            if not found and len(left_conditions) == 0:
+                raise AssertionError("The UE did not receive condition from oracle arranged target satellite")
+            if found:
+                return targetid
+            else:
+                return -1
         else:
-            return candidates
+            sat_id = -1
+            if len(left_conditions) == 0:
+                condition = random.choice(available_conditions)
+                # This choose the target
+                sat_id = condition.satid
+            else:
+                prob = 0.5
+                if random.random() < prob:
+                    condition = random.choice(available_conditions)
+                    # This choose the target
+                    sat_id = condition.satid
+            return sat_id
+
+    # This will use orcale if applicable
+    def select_candidates(self, candidates):
+        if self.oracle is not None:
+            targetid = self.oracle.query_next_satellite(self.identity, self.serving_satellite.identity)
+
+        if self.oracle is not None and targetid != -1:
+            if targetid not in candidates:
+                raise AssertionError(
+                f"UE {self.identity} at time: {self.env.now}, serving_satellite {self.serving_satellite.identity}, target {targetid} not in the candidate set")
+            if len(candidates) > NUMBER_CANDIDATE:
+                candidates2 = copy.deepcopy(candidates)
+                candidates2.remove(targetid)
+                selected_candidates = random.sample(candidates2, NUMBER_CANDIDATE-1)
+                selected_candidates.append(targetid)
+                return selected_candidates
+            else:
+                return candidates
+
+
+        else:
+            if len(candidates) > NUMBER_CANDIDATE:
+                selected_candidates = random.sample(candidates, NUMBER_CANDIDATE)
+                return selected_candidates
+            else:
+                return candidates

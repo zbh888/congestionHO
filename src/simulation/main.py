@@ -39,7 +39,7 @@ if __name__ == "__main__":
     # When oracle_simulation is False, the oracle_assignment could be True/False
     # When oracle_simulation is True, the oracle_assignment must be True
     oracle_assignment = True
-    oracle_simulation = False
+    oracle_simulation = True
     if oracle_simulation:
         assert(oracle_assignment)
     random.seed(10)
@@ -55,7 +55,7 @@ if __name__ == "__main__":
     if oracle_assignment:
         assignment_oracle = Oracle()
     if oracle_simulation:
-        simulation_oracle = oracle
+        simulation_oracle = assignment_oracle
         
     UEs = {}
     for ue_template in UEs_template:

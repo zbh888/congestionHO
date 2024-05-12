@@ -32,9 +32,10 @@ class Oracle:
                     # TODO consider if the UE will be covered by this one or not
                     # This is possible, but we will see
                     return array[index + 1]
-            # does not find ueid should be served by serving_satellite_id
-            # maybe out of sync
-            return -2 
+        # does not find ueid should be served by serving_satellite_id
+        # maybe out of sync
+        raise AssertionError(f"Oracle does not found UE {ueid} should ever be served by satellite {serving_satellite_id}")
+        return -2 
 
     def query_init_satellite(self, ueid):
         return self.satellite_sequence[ueid][0]
