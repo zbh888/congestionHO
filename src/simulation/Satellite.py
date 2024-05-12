@@ -27,7 +27,7 @@ class Satellite(Base):
                       coverage_info=coverage_info,
                       env=env,
                       object_type="Satellite")
-        
+
         self.coverage_r = coverage_r
         self.height = height
         self.velocity = velocity

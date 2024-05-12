@@ -50,9 +50,12 @@ class UE(Base):
             if (next < self.DURATION and self.state == ACTIVE
                     and self.coverage_info[self.identity, self.serving_satellite.identity, now] == 1
                     and self.coverage_info[self.identity, self.serving_satellite.identity, next] == 0):
-                covered_satellites = np.where(self.coverage_info[self.identity, :, now] == 1)[0]
-                possible_candidates = np.delete(covered_satellites,
-                                                np.where(covered_satellites == self.serving_satellite.identity))
+                covered_satellites_now = np.where(self.coverage_info[self.identity, :, now] == 1)[0]
+                covered_satellites_future = np.where(self.coverage_info[self.identity, :, min(now+25, self.DURATION-1)] == 1)[0]
+                possible_candidates = np.intersect1d(covered_satellites_now, covered_satellites_future)
+                #possible_candidates = np.array(list(set(covered_satellites_future).intersection(covered_satellites_now)))
+                #possible_candidates = np.delete(covered_satellites,
+                 #                               np.where(covered_satellites == self.serving_satellite.identity))
                 candidates = self.select_candidates(possible_candidates)
                 assert (len(candidates) > 0)
                 source = self.satellites[self.serving_satellite.identity]
