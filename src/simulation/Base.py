@@ -1,4 +1,5 @@
 import json
+import simpy
 
 
 class Base:
@@ -7,14 +8,19 @@ class Base:
                  position_x,
                  position_y,
                  object_type,
+                 coverage_info,
                  env
                  ):
+        self.coverage_info = coverage_info
+        self.DURATION = coverage_info.shape[2]
         self.type = object_type
         self.identity = identity
         self.position_x = position_x
         self.position_y = position_y
         self.env = env
         self.type = object_type
+        self.messageQ = simpy.Store(env)
+        self.satellites = None
 
     def init(self):
         print(

@@ -4,7 +4,6 @@ from Config import *
 import json
 import numpy as np
 import random
-import simpy
 import copy
 
 
@@ -22,16 +21,13 @@ class UE(Base):
                       identity=identity,
                       position_x=position_x,
                       position_y=position_y,
+                      coverage_info=coverage_info,
                       env=env,
                       object_type="UE")
 
-        self.coverage_info = coverage_info
-        self.DURATION = coverage_info.shape[2]
         self.serving_satellite = None
-        self.satellites = None
         self.oracle = oracle
 
-        self.messageQ = simpy.Store(env)
         self.state = ACTIVE
         # This is an object 'UE_condition'
         self.condition = None

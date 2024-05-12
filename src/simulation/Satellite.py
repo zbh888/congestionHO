@@ -1,5 +1,4 @@
 import random
-import simpy
 
 from Base import *
 from Condition import *
@@ -25,18 +24,15 @@ class Satellite(Base):
                       identity=identity,
                       position_x=position_x,
                       position_y=position_y,
+                      coverage_info=coverage_info,
                       env=env,
                       object_type="Satellite")
 
-        self.coverage_info = coverage_info
-        self.DURATION = self.coverage_info.shape[2]
         self.height = height
-        self.coverage_r = coverage_r
         self.velocity = velocity
         self.sind = sind
         self.cosd = cosd
         self.UEs = None
-        self.satellites = None
 
         # === source function ===
         # condition_record[ueid] stores the received conditions from candidates ([Sat_condition, ..., Sat_condition])
@@ -49,7 +45,6 @@ class Satellite(Base):
         self.takeover_condition_record = {}
 
         self.counter = counter(self.DURATION)
-        self.messageQ = simpy.Store(env)
 
         # Running Process
         self.env.process(self.init())
