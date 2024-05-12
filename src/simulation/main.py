@@ -5,6 +5,7 @@ from Satellite import *
 from Oracle import *
 import time
 
+
 def initial_assignment(UEss, Satss, oracle):
     C = UEss[0].coverage_info
     if oracle is None:
@@ -20,11 +21,9 @@ def initial_assignment(UEss, Satss, oracle):
         for ueid in UEss:
             ue = UEss[ueid]
             satid = oracle.query_init_satellite(ueid)
-            assert(C[ueid, satid, 0] == 1)
+            assert (C[ueid, satid, 0] == 1)
             ue.serving_satellite = Satss[satid]
             ue.serving_satellite_history.append(satid)
-            
-         
 
 
 def monitor_timestamp(env):
@@ -41,7 +40,7 @@ if __name__ == "__main__":
     oracle_assignment = True
     oracle_simulation = True
     if oracle_simulation:
-        assert(oracle_assignment)
+        assert (oracle_assignment)
     random.seed(10)
 
     # Loading scenarios
@@ -56,7 +55,7 @@ if __name__ == "__main__":
         assignment_oracle = Oracle()
     if oracle_simulation:
         simulation_oracle = assignment_oracle
-        
+
     UEs = {}
     for ue_template in UEs_template:
         ID = ue_template.ID
@@ -66,7 +65,7 @@ if __name__ == "__main__":
                 position_x=ue_template.x,
                 position_y=ue_template.y,
                 coverage_info=C,
-                oracle = simulation_oracle,
+                oracle=simulation_oracle,
                 env=env
             )
         else:
@@ -96,8 +95,8 @@ if __name__ == "__main__":
 
     for satid in Satellites:
         Satellites[satid].UEs = UEs
-        Satellites[satid].satellites = Satellites    
-        
+        Satellites[satid].satellites = Satellites
+
     print(f"Loading scenario in the simulation takes {time.time() - beginning}")
     # ========= UE, SAT objectives are ready =========
     initial_assignment(UEs, Satellites, assignment_oracle)

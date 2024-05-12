@@ -7,6 +7,7 @@ import random
 import simpy
 import copy
 
+
 class UE(Base):
     def __init__(self,
                  identity,
@@ -160,11 +161,11 @@ class UE(Base):
         if self.oracle is not None and targetid != -1:
             if targetid not in candidates:
                 raise AssertionError(
-                f"UE {self.identity} at time: {self.env.now}, serving_satellite {self.serving_satellite.identity}, target {targetid} not in the candidate set")
+                    f"UE {self.identity} at time: {self.env.now}, serving_satellite {self.serving_satellite.identity}, target {targetid} not in the candidate set")
             if len(candidates) > NUMBER_CANDIDATE:
                 candidates2 = copy.deepcopy(candidates)
                 candidates2.remove(targetid)
-                selected_candidates = random.sample(candidates2, NUMBER_CANDIDATE-1)
+                selected_candidates = random.sample(candidates2, NUMBER_CANDIDATE - 1)
                 selected_candidates.append(targetid)
                 return selected_candidates
             else:
