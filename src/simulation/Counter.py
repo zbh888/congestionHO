@@ -4,8 +4,9 @@ import seaborn as sns
 
 
 class allCounters:
-    def __init__(self, satellites):
+    def __init__(self, satellites, UEs):
         self.all_counter = {}
+        self.UEs = UEs
         for satid in satellites:
             self.all_counter[satid] = satellites[satid].counter
         self.N_SAT = len(satellites)
@@ -34,6 +35,20 @@ class allCounters:
         plt.figure(figsize=(100, 80))
         sns.heatmap(result, annot=False, cmap='coolwarm')
         plt.savefig('heatmap.png')
+        plt.close()
+
+
+    def generate_delay_box(self):
+        total = []
+        for ueid in self.UEs:
+            ue = self.UEs[ueid]
+            total.append(sum(ue.applied_delay_history) / len(ue.applied_delay_history))
+        plt.boxplot(total)
+        plt.ylabel('Delay')
+        plt.savefig('box.png')
+        plt.close()
+
+
 
 
 class counter:

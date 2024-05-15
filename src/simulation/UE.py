@@ -34,6 +34,7 @@ class UE(Base):
 
         # Logs
         self.serving_satellite_history = []
+        self.applied_delay_history = []
 
         # Running Process
         env.process(self.init())
@@ -53,9 +54,6 @@ class UE(Base):
                 covered_satellites_now = np.where(self.coverage_info[self.identity, :, now] == 1)[0]
                 covered_satellites_future = np.where(self.coverage_info[self.identity, :, min(now+25, self.DURATION-1)] == 1)[0]
                 possible_candidates = np.intersect1d(covered_satellites_now, covered_satellites_future)
-                #possible_candidates = np.array(list(set(covered_satellites_future).intersection(covered_satellites_now)))
-                #possible_candidates = np.delete(covered_satellites,
-                 #                               np.where(covered_satellites == self.serving_satellite.identity))
                 candidates = self.select_candidates(possible_candidates)
                 assert (len(candidates) > 0)
                 source = self.satellites[self.serving_satellite.identity]
@@ -79,6 +77,7 @@ class UE(Base):
                         msg=data,
                         to=target,
                     )
+
             # ================================================
             yield self.env.timeout(1)
 
@@ -105,8 +104,10 @@ class UE(Base):
             if task == RANDOM_ACCESS_RESPONSE:
                 # Cleanup for the UE
                 self.state = ACTIVE
-                self.serving_satellite = self.satellites[data['from']]
-                self.serving_satellite_history.append(data['from'])
+                target_id = data['from']
+                self.serving_satellite = self.satellites[target_id]
+                self.serving_satellite_history.append(target_id)
+                self.applied_delay_history.append(self.condition.conditions[target_id].access_delay)
                 self.condition = None
 
     def determine_if_access(self):

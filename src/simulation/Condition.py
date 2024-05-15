@@ -18,10 +18,10 @@ class Sat_condition:
 class UE_condition:
     def __init__(self, list_Sat_condition_json, ueid, creation_time):
         self.ueid = ueid
-        self.conditions = []
+        self.conditions = {}
         for condition in list_Sat_condition_json:
             assert (self.ueid == condition["ueid"])
-            self.conditions.append(Sat_condition(access_delay=condition['access_delay'],
+            self.conditions[condition['satid']] = (Sat_condition(access_delay=condition['access_delay'],
                                                  ueid=condition['ueid'],
                                                  satid=condition['satid'],
                                                  sourceid=condition['source']))
@@ -30,7 +30,8 @@ class UE_condition:
     def available_access_conditions(self, time):
         available_conditons = []
         left_conditons = []
-        for condition in self.conditions:
+        for sat_id in self.conditions:
+            condition = self.conditions[sat_id]
             if self.creation_time + condition.access_delay == time:
                 available_conditons.append(condition)
             elif self.creation_time + condition.access_delay > time:

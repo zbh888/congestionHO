@@ -106,5 +106,6 @@ if __name__ == "__main__":
     print('============= Experiment Log =============')
     env.run(until=DURATION)
     print('============= Experiment Ends =============')
-    counter = allCounters(Satellites)
-    # counter.generate_heap_map(100)
+    counter = allCounters(Satellites, UEs)
+    counter.generate_heap_map(100)
+    counter.generate_delay_box()
