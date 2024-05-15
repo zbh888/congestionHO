@@ -4,6 +4,7 @@ from Base import *
 from Condition import *
 from Config import *
 from Counter import *
+from Queue import *
 
 
 class Satellite(Base):
@@ -17,6 +18,8 @@ class Satellite(Base):
                  sind,
                  cosd,
                  coverage_info,
+                 max_access_opportunity,
+                 max_access_slots,
                  env):
 
         # Config Initialization
@@ -34,11 +37,13 @@ class Satellite(Base):
         self.sind = sind
         self.cosd = cosd
         self.UEs = None
+        self.access_Q = Queue(max_access_opportunity, max_access_slots)
+
 
         # === source function ===
         # condition_record[ueid] stores the received conditions from candidates ([Sat_condition, ..., Sat_condition])
         self.condition_record = {}
-        # condition_record[ueid] stores the condition that has been given (Sat_condition)
+        # candidates_record[ueid] stores candidates
         self.candidates_record = {}
 
         # === target function ===
@@ -175,7 +180,7 @@ class Satellite(Base):
                 del self.candidates_record[ueid]
                 del self.condition_record[ueid]
 
-            # ================================================ 
+            # ================================================ Source
             if task == RRC_RECONFIGURATION_COMPLETE:
                 # no logic needs to be handled here
                 assert (True)

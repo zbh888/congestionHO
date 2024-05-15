@@ -37,6 +37,8 @@ if __name__ == "__main__":
     # configuration
     # When oracle_simulation is False, the oracle_assignment could be True/False
     # When oracle_simulation is True, the oracle_assignment must be True
+    max_access_opportunity = 5
+    max_access_slots = 100
     oracle_assignment = False
     oracle_simulation = False
     if oracle_simulation:
@@ -85,6 +87,8 @@ if __name__ == "__main__":
                 sind=sat_template.sind,
                 cosd=sat_template.cosd,
                 coverage_info=C,
+                max_access_opportunity = max_access_opportunity,
+                max_access_slots = max_access_slots,
                 env=env
             )
         else:
