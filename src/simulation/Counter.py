@@ -37,6 +37,10 @@ class allCounters:
         plt.savefig('heatmap.png')
         plt.close()
 
+    def generate_satellite_stat(self):
+        # this should generate some number
+        return 1
+
 
     def generate_delay_box(self):
         total = []
@@ -47,6 +51,10 @@ class allCounters:
         plt.ylabel('Delay')
         plt.savefig('box.png')
         plt.close()
+
+    def generate_UE_stat(self):
+        # this should generate some number
+        return 1
 
 
 
