@@ -38,6 +38,7 @@ class Satellite(Base):
         self.cosd = cosd
         self.UEs = None
         self.access_Q = Queue(max_access_opportunity, max_access_slots)
+        self.current_assigned_slot = None
 
 
         # === source function ===
@@ -54,16 +55,32 @@ class Satellite(Base):
 
         # Running Process
         self.env.process(self.init())
+        self.env.process(self.action_monitor())
         self.env.process(self.handle_messages())
 
     # ====== Satellite functions ======
+    def decide_delay(self, ueid, sourceid):
+        assert(self.access_Q.counter - self.access_Q.max_access_slots == self.env.now)
+        available_slots = self.access_Q.available_slots()
+        # greedy
+        #delay = min(available_slots) + 1
+        # random
+        delay = random.choice(available_slots) + 1
+        return delay
+
     def prepare_condition(self, ueid, sourceid):
-        delay = random.randint(1, 20)
+        delay = self.decide_delay(ueid, sourceid)
         # TODO Should we consider the case when access time cannot happen with handover at the same time?
         if self.env.now + delay < self.DURATION:
             assert (self.coverage_info[ueid, self.identity, self.env.now + delay] == 1)
         condition = Sat_condition(access_delay=delay, ueid=ueid, satid=self.identity, sourceid=sourceid)
+        self.access_Q.insert(ueid, delay)
         return condition
+
+    def action_monitor(self):
+        while True:
+            yield self.env.timeout(0.999999)
+            self.current_assigned_slot = self.access_Q.shift()
 
     def handle_messages(self):
         while True:
@@ -126,6 +143,8 @@ class Satellite(Base):
             if task == RANDOM_ACCESS:
                 # Response to UE
                 ueid = data['from']
+                assert(self.current_assigned_slot.include(ueid))
+                assert(self.current_assigned_slot.time == self.env.now)
                 takeover_condition = self.takeover_condition_record[ueid]
                 UE_who_requested = self.UEs[ueid]
                 data = {
@@ -192,3 +211,4 @@ class Satellite(Base):
                 ueid = data['ueid']
                 # upon receving handover cancel, the candidate remove the UE's record
                 del self.takeover_condition_record[ueid]
+                self.access_Q.release_resource(ueid)
