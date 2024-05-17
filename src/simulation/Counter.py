@@ -11,6 +11,7 @@ class allCounters:
             self.all_counter[satid] = satellites[satid].counter
         self.N_SAT = len(satellites)
         self.N_TIME = satellites[0].DURATION
+        self.time_sat_matrix = self.generate_time_sat_matrix()
 
     def generate_time_sat_matrix(self):
         res = []
@@ -27,9 +28,8 @@ class allCounters:
 
     def generate_heap_map(self, interval):
         assert (self.N_TIME % interval == 0)
-        res = self.generate_time_sat_matrix()
         total_slots = self.N_TIME // interval
-        res_reshaped = res.reshape(self.N_SAT, total_slots, interval)
+        res_reshaped = self.time_sat_matrix.reshape(self.N_SAT, total_slots, interval)
         result = np.sum(res_reshaped, axis=2)
 
         plt.figure(figsize=(100, 80))
@@ -37,9 +37,17 @@ class allCounters:
         plt.savefig('heatmap.png')
         plt.close()
 
-    def generate_satellite_stat(self):
-        # this should generate some number
-        return 1
+    def generate_cumulative_load_each_time(self):
+        x = self.time_sat_matrix.flatten()
+        count_0 = np.sum(x == 0)
+        print(f"removed {count_0} elements")
+        x = x[x != 0]
+        sorted_data = np.sort(x)
+        cdf = np.arange(1, len(sorted_data) + 1) / len(sorted_data)
+        plt.plot(sorted_data, cdf, marker='.', linestyle='none')
+        plt.grid(True)
+        plt.savefig('cumulative.png')
+        plt.close()
 
 
     def generate_delay_box(self):
@@ -52,9 +60,32 @@ class allCounters:
         plt.savefig('box.png')
         plt.close()
 
-    def generate_UE_stat(self):
-        # this should generate some number
-        return 1
+    def generate_total_load_each_satellite(self):
+        x = np.sum(self.time_sat_matrix, axis = 1)
+        sorted_data = np.sort(x)
+        plt.plot(sorted_data, marker='', linestyle='-', color='b')
+        plt.grid(True)
+        plt.savefig('total_each_satellite.png')
+        plt.close()
+
+
+    def generate_total_handover(self):
+        total_handover_count = 0
+        for ueid in self.UEs:
+            ue = self.UEs[ueid]
+            total_handover_count += (len(ue.serving_satellite_history) - 1)
+        return total_handover_count
+
+    def generate_total_signalling(self):
+        return np.sum(self.time_sat_matrix)
+
+    def give_result(self, interval):
+        print(f"Total signalling: {self.generate_total_signalling()}")
+        print(f"Total handover: {self.generate_total_handover()}")
+        self.generate_heap_map(interval)
+        self.generate_delay_box()
+        self.generate_cumulative_load_each_time()
+        self.generate_total_load_each_satellite()
 
 
 
