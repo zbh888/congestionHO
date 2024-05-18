@@ -222,6 +222,7 @@ class Satellite(Base):
         if self.oracle is not None:
             targetid = self.oracle.query_next_satellite(ueid, self.identity)
         if self.oracle is not None and targetid != -1:
+            # TODO not tested
             found = False
             for condition in conditions:
                 if targetid == condition['satid']:

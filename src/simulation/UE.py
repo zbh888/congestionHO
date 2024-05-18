@@ -116,49 +116,6 @@ class UE(Base):
     def determine_if_access(self):
         return self.condition.access_time == self.env.now
 
-    def determine_if_access2(self):
-        assert (self.condition is not None)
-        assert (self.state == RRC_CONFIGURED)
-        available_conditions, left_conditions = self.condition.available_access_conditions(self.env.now)
-        if len(available_conditions) == 0:
-            return -1
-        else:
-            satid = self.decide_best_action(available_conditions, left_conditions)
-            if satid == -1:
-                return -1
-            else:
-                return satid
-
-    # This will use orcale if applicable
-    def decide_best_action(self, available_conditions, left_conditions):
-        if self.oracle is not None:
-            targetid = self.oracle.query_next_satellite(self.identity, self.serving_satellite.identity)
-
-        if self.oracle is not None and targetid != -1:
-            found = False
-            for condition in available_conditions:
-                if targetid == condition.satid:
-                    found = True
-            if not found and len(left_conditions) == 0:
-                raise AssertionError("The UE did not receive condition from oracle arranged target satellite")
-            if found:
-                return targetid
-            else:
-                return -1
-        else:
-            sat_id = -1
-            if len(left_conditions) == 0:
-                condition = random.choice(available_conditions)
-                # This choose the target
-                sat_id = condition.satid
-            else:
-                prob = 0.5
-                if random.random() < prob:
-                    condition = random.choice(available_conditions)
-                    # This choose the target
-                    sat_id = condition.satid
-            return sat_id
-
     # This will use orcale if applicable
     def select_candidates(self, candidates):
         if self.oracle is not None:
