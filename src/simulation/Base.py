@@ -43,5 +43,5 @@ class Base:
         msg['from'] = self.identity
         msg['to'] = to.identity
         msg = json.dumps(msg)
-        print(f"{self.type} {self.identity} sends {to.type} {to.identity} the message {msg} at {self.env.now}")
+        print(f"[{self.env.now}] {self.type} {self.identity} sends {to.type} {to.identity} the message {msg}")
         to.messageQ.put(msg)

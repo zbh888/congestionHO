@@ -89,7 +89,8 @@ if __name__ == "__main__":
                 coverage_info=C,
                 max_access_opportunity = max_access_opportunity,
                 max_access_slots = max_access_slots,
-                env=env
+                env=env,
+                oracle = simulation_oracle,
             )
         else:
             print("ERROR")
@@ -110,4 +111,5 @@ if __name__ == "__main__":
     print('============= Experiment Log =============')
     env.run(until=DURATION)
     print('============= Experiment Ends =============')
+    counter = allCounters(Satellites, UEs)
     counter.give_result(100)

@@ -57,11 +57,9 @@ class UE(Base):
                 candidates = self.select_candidates(possible_candidates)
                 assert (len(candidates) > 0)
                 source = self.satellites[self.serving_satellite.identity]
-                print(candidates.tolist())
                 candidates_utilities = []
                 for satid in candidates:
                     candidates_utilities.append(self.estimate_serving_length(satid))
-                print(candidates_utilities)
                 data = {
                     "task": MEASUREMENT_REPORT,
                     "candidates": candidates.tolist(),
@@ -73,9 +71,8 @@ class UE(Base):
                 )
             # ================================================
             if self.state == RRC_CONFIGURED:
-                satid = self.determine_if_access()
-                if satid != -1:
-                    target = self.satellites[satid]
+                if self.determine_if_access():
+                    target = self.satellites[self.condition.targetid]
                     data = {
                         "task": RANDOM_ACCESS,
                     }
@@ -83,7 +80,6 @@ class UE(Base):
                         msg=data,
                         to=target,
                     )
-
             # ================================================
             yield self.env.timeout(1)
 
@@ -96,8 +92,10 @@ class UE(Base):
             # ================================================
             if task == RRC_RECONFIGURATION:
                 source = self.satellites[data['from']]
-                conditions = data['conditions']
-                self.condition = UE_condition(conditions, self.identity, self.env.now)
+                # conditions = data['conditions'] # I expect we don't need it
+                targetid = data['suggested_target']
+                corresponding_delay = data['corresponding_delay']
+                self.condition = UE_condition(targetid, corresponding_delay, self.env.now)
                 self.state = RRC_CONFIGURED
                 data = {
                     "task": RRC_RECONFIGURATION_COMPLETE,
@@ -113,10 +111,12 @@ class UE(Base):
                 target_id = data['from']
                 self.serving_satellite = self.satellites[target_id]
                 self.serving_satellite_history.append(target_id)
-                self.applied_delay_history.append(self.condition.conditions[target_id].access_delay)
+                self.applied_delay_history.append(self.condition.delay)
                 self.condition = None
-
     def determine_if_access(self):
+        return self.condition.access_time == self.env.now
+
+    def determine_if_access2(self):
         assert (self.condition is not None)
         assert (self.state == RRC_CONFIGURED)
         available_conditions, left_conditions = self.condition.available_access_conditions(self.env.now)

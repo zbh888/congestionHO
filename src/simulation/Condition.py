@@ -15,7 +15,7 @@ class Sat_condition:
 
 
 # This is a collection of Sat_condition
-class UE_condition:
+class UE_condition2:
     def __init__(self, list_Sat_condition_json, ueid, creation_time):
         self.ueid = ueid
         self.conditions = {}
@@ -37,3 +37,11 @@ class UE_condition:
             elif self.creation_time + condition.access_delay > time:
                 left_conditons.append(condition)
         return available_conditons, left_conditons
+
+
+class UE_condition:
+    def __init__(self, targetid, delay, now):
+        self.targetid = targetid
+        self.delay = delay
+        self.access_time = delay + now
+

@@ -20,6 +20,7 @@ class Satellite(Base):
                  coverage_info,
                  max_access_opportunity,
                  max_access_slots,
+                 oracle,
                  env):
 
         # Config Initialization
@@ -39,6 +40,7 @@ class Satellite(Base):
         self.UEs = None
         self.access_Q = Queue(max_access_opportunity, max_access_slots)
         self.current_assigned_slot = None
+        self.oracle = oracle
 
 
         # === source function ===
@@ -130,9 +132,12 @@ class Satellite(Base):
                 condition = data["condition"]
                 self.condition_record[ueid].append(condition)
                 if len(self.condition_record[ueid]) == len(self.candidates_record[ueid]):
+                    best_targetid, delay = self.decide_best_target(ueid)
                     data = {
                         "task": RRC_RECONFIGURATION,
                         "conditions": self.condition_record[ueid],
+                        "suggested_target": best_targetid,
+                        "corresponding_delay": delay,
                     }
                     UE_who_requested = self.UEs[ueid]
                     self.send_message(
@@ -212,3 +217,23 @@ class Satellite(Base):
                 # upon receving handover cancel, the candidate remove the UE's record
                 del self.takeover_condition_record[ueid]
                 self.access_Q.release_resource(ueid)
+    def decide_best_target(self, ueid):
+        conditions = self.condition_record[ueid]
+        if self.oracle is not None:
+            targetid = self.oracle.query_next_satellite(ueid, self.identity)
+        if self.oracle is not None and targetid != -1:
+            found = False
+            for condition in conditions:
+                if targetid == condition['satid']:
+                    found = True
+                    corresponding_delay = condition['access_delay']
+            if not found:
+                raise AssertionError("The UE did not receive condition from oracle arranged target satellite")
+            return targetid, corresponding_delay
+        else:
+            selected_condition = random.choice(conditions)
+            targetid = selected_condition['satid']
+            delay = selected_condition['access_delay']
+            return targetid, delay
+
+
