@@ -57,9 +57,15 @@ class UE(Base):
                 candidates = self.select_candidates(possible_candidates)
                 assert (len(candidates) > 0)
                 source = self.satellites[self.serving_satellite.identity]
+                print(candidates.tolist())
+                candidates_utilities = []
+                for satid in candidates:
+                    candidates_utilities.append(self.estimate_serving_length(satid))
+                print(candidates_utilities)
                 data = {
                     "task": MEASUREMENT_REPORT,
                     "candidates": candidates.tolist(),
+                    "utility": candidates_utilities,
                 }
                 self.send_message(
                     msg=data,
@@ -167,14 +173,33 @@ class UE(Base):
                 candidates2.remove(targetid)
                 selected_candidates = random.sample(candidates2, NUMBER_CANDIDATE - 1)
                 selected_candidates.append(targetid)
-                return selected_candidates
+                return np.array(selected_candidates)
             else:
                 return candidates
 
 
         else:
             if len(candidates) > NUMBER_CANDIDATE:
-                selected_candidates = random.sample(candidates, NUMBER_CANDIDATE)
-                return selected_candidates
+                candidate_utility = []
+                for satid in candidates:
+                    serving_time = self.estimate_serving_length(satid)
+                    if serving_time > 20:
+                        candidate_utility.append((satid, self.estimate_serving_length(satid)))
+                sorted_list = sorted(candidate_utility, key=lambda x: -x[1])
+                # find best three TODO not tested
+                selected_candidates = [x[0] for x in sorted_list][:NUMBER_CANDIDATE]
+                # random
+                #selected_candidates = random.sample(candidates, NUMBER_CANDIDATE)
+                return np.array(selected_candidates)
             else:
                 return candidates
+
+    def estimate_serving_length(self, satid):
+        # The returned value means from the current time + {return}, it will perform handover.
+        x, = np.where(self.coverage_info[self.identity, satid, self.env.now:] == 0)
+        if len(x) == 0:
+            return 1e7
+        else:
+            return int(x[0]-1)
+
+
