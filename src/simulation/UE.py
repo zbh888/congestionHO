@@ -38,9 +38,8 @@ class UE(Base):
 
         # Running Process
         env.process(self.init())
-        if self.identity == 1:
-            self.env.process(self.action_monitor())
-            self.env.process(self.handle_messages())
+        self.env.process(self.action_monitor())
+        self.env.process(self.handle_messages())
 
     # ====== UE functions ======
     def action_monitor(self):
@@ -144,7 +143,7 @@ class UE(Base):
                     if serving_time > WINDOW_SIZE: # TODO This may be adjusted to min_serving_time
                         candidate_utility.append((satid, self.estimate_serving_length(satid)))
                 sorted_list = sorted(candidate_utility, key=lambda x: -x[1])
-                # find best three TODO not tested
+                # find best candidates
                 selected_candidates = [x[0] for x in sorted_list][:NUMBER_CANDIDATE]
                 # random
                 #selected_candidates = random.sample(candidates, NUMBER_CANDIDATE)

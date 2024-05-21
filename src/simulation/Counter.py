@@ -12,6 +12,7 @@ class allCounters:
         self.N_SAT = len(satellites)
         self.N_TIME = satellites[0].DURATION
         self.time_sat_matrix = self.generate_time_sat_matrix()
+        self.time_sat_matrix_flatten = self.time_sat_matrix.flatten()
 
     def generate_time_sat_matrix(self):
         res = []
@@ -38,13 +39,11 @@ class allCounters:
         plt.close()
 
     def generate_cumulative_load_each_time(self):
-        x = self.time_sat_matrix.flatten()
-        count_0 = np.sum(x == 0)
-        print(f"removed {count_0} elements")
-        x = x[x != 0]
-        sorted_data = np.sort(x)
-        cdf = np.arange(1, len(sorted_data) + 1) / len(sorted_data)
-        plt.plot(sorted_data, cdf, marker='.', linestyle='none')
+        x = self.time_sat_matrix_flatten[self.time_sat_matrix_flatten != 0]
+        num_bins = 100
+        counts, bin_edges = np.histogram(x, bins=num_bins, density=True)
+        cdf = np.cumsum(counts * np.diff(bin_edges))
+        plt.plot(bin_edges[1:], cdf, marker='none', linestyle='-')
         plt.grid(True)
         plt.savefig('cumulative.png')
         plt.close()
@@ -80,8 +79,10 @@ class allCounters:
         return np.sum(self.time_sat_matrix)
 
     def give_result(self, interval):
-        print(f"Total signalling: {self.generate_total_signalling()}")
-        print(f"Total handover: {self.generate_total_handover()}")
+        with open("result_stat.txt", "w") as file:
+            file.write(f"Total signalling: {self.generate_total_signalling()}\n")
+            file.write(f"Total handover: {self.generate_total_handover()}\n")
+            file.write(f"Non-Empty time: {np.sum(self.time_sat_matrix_flatten != 0)}\n")
         self.generate_heap_map(interval)
         self.generate_delay_box()
         self.generate_cumulative_load_each_time()
