@@ -78,15 +78,36 @@ class allCounters:
     def generate_total_signalling(self):
         return np.sum(self.time_sat_matrix)
 
+    def highest_25_percent_mean_variance(self, nnumbers):
+        # Sort the list in descending order
+        sorted_numbers = sorted(nnumbers, reverse=True)
+
+        # Calculate the index to split the top 25%
+        cutoff_index = int(len(sorted_numbers) * 0.25)
+
+        # Select the highest 25%
+        top_25_percent = sorted_numbers[:cutoff_index]
+
+        # Calculate the mean and variance
+        mean_top_25 = np.mean(top_25_percent)
+        variance_top_25 = np.var(top_25_percent)
+
+        return mean_top_25, variance_top_25
+
     def give_result(self, interval):
+        x = self.time_sat_matrix_flatten[self.time_sat_matrix_flatten != 0]
+        mean, var = self.highest_25_percent_mean_variance(x)
         with open("result_stat.txt", "w") as file:
             file.write(f"Total signalling: {self.generate_total_signalling()}\n")
             file.write(f"Total handover: {self.generate_total_handover()}\n")
             file.write(f"Non-Empty time: {np.sum(self.time_sat_matrix_flatten != 0)}\n")
+            file.write(f"Non-Empty time top 25% mean: {mean}\n")
+            file.write(f"Non-Empty time top 25% variance: {var}\n")
         self.generate_heap_map(interval)
         self.generate_delay_box()
         self.generate_cumulative_load_each_time()
         self.generate_total_load_each_satellite()
+        # there should be a measurement to see if busy time all gathering to one satellite, a list containing [10, 20, 0,0] each enty is satellite
 
 
 
