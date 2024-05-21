@@ -61,24 +61,6 @@ class Satellite(Base):
         self.env.process(self.handle_messages())
 
     # ====== Satellite functions ======
-    def decide_delay(self, ueid, sourceid):
-        assert(self.access_Q.counter - self.access_Q.max_access_slots == self.env.now)
-        available_slots = self.access_Q.available_slots()
-        # greedy
-        #delay = min(available_slots) + 1
-        # random
-        delay = random.choice(available_slots) + 1
-        return delay
-
-    def prepare_condition(self, ueid, sourceid):
-        delay = self.decide_delay(ueid, sourceid)
-        # TODO Should we consider the case when access time cannot happen with handover at the same time?
-        if self.env.now + delay < self.DURATION:
-            assert (self.coverage_info[ueid, self.identity, self.env.now + delay] == 1)
-        condition = Sat_condition(access_delay=delay, ueid=ueid, satid=self.identity, sourceid=sourceid)
-        self.access_Q.insert(ueid, delay)
-        return condition
-
     def action_monitor(self):
         while True:
             yield self.env.timeout(0.999999)
@@ -105,6 +87,8 @@ class Satellite(Base):
                     data = {
                         "task": HANDOVER_REQUEST,
                         "ueid": ueid,
+                        "candidates": candidates,
+                        "utility": data['utility'],
                     }
                     self.send_message(
                         msg=data,
@@ -115,7 +99,9 @@ class Satellite(Base):
                 source_id = data['from']
                 requested_satellite = self.satellites[source_id]
                 ueid = data['ueid']
-                condition = self.prepare_condition(ueid, source_id)
+                candidates = data['candidates']
+                utilities = data['utility']
+                condition = self.prepare_condition(ueid, source_id, candidates, utilities)
                 data = {
                     "task": HANDOVER_RESPONSE,
                     "ueid": ueid,
@@ -217,6 +203,8 @@ class Satellite(Base):
                 # upon receving handover cancel, the candidate remove the UE's record
                 del self.takeover_condition_record[ueid]
                 self.access_Q.release_resource(ueid)
+
+    # This is a source satellite function
     def decide_best_target(self, ueid):
         conditions = self.condition_record[ueid]
         if self.oracle is not None:
@@ -231,10 +219,52 @@ class Satellite(Base):
             if not found:
                 raise AssertionError("The UE did not receive condition from oracle arranged target satellite")
             return targetid, corresponding_delay
+        # This clause if for non-oracle
         else:
-            selected_condition = random.choice(conditions)
+            if SOURCE_ALG == SOURCE_ALG_RANDOM:
+                selected_condition = random.choice(conditions)
+            if SOURCE_ALG == SOURCE_ALG_EARLIEST: # shortest delay
+                min_delay = WINDOW_SIZE * 2
+                condition_indices_with_shortest_delay = []
+                for condition in conditions:
+                    min_delay = min(min_delay, condition['access_delay'])
+                for index, condition in enumerate(conditions):
+                    if min_delay == condition['access_delay']:
+                        condition_indices_with_shortest_delay.append(index)
+                selected_condition = conditions[random.choice(condition_indices_with_shortest_delay)]
+            if SOURCE_ALG == SOURCE_ALG_LONGEST: # longest serving
+                max_serving = -1
+                condition_indices_with_max_serving = []
+                for condition in conditions:
+                    max_serving = max(max_serving, condition['ue_utility'])
+                for index, condition in enumerate(conditions):
+                    if max_serving == condition['ue_utility']:
+                        condition_indices_with_max_serving.append(index)
+                selected_condition = conditions[random.choice(condition_indices_with_max_serving)]
             targetid = selected_condition['satid']
             delay = selected_condition['access_delay']
             return targetid, delay
+
+    # This is a candidate satellite function
+    def decide_delay(self, ueid, sourceid, candidates, utilities):
+        assert(self.access_Q.counter - self.access_Q.max_access_slots == self.env.now)
+        available_slots = self.access_Q.available_slots()
+        if CANDIDATE_ALG == CANDIDATE_ALG_EARLIEST:
+            # greedy
+            delay = min(available_slots) + 1
+        if CANDIDATE_ALG == CANDIDATE_ALG_RANDOM:
+            # random
+            delay = random.choice(available_slots) + 1
+        return delay
+
+    def prepare_condition(self, ueid, sourceid, candidates, utilities):
+        delay = self.decide_delay(ueid, sourceid, candidates, utilities)
+        ue_utility = utilities[candidates.index(self.identity)]
+        # TODO Should we consider the case when access time cannot happen with handover at the same time?
+        if self.env.now + delay < self.DURATION:
+            assert (self.coverage_info[ueid, self.identity, self.env.now + delay] == 1)
+        condition = Sat_condition(access_delay=delay, ueid=ueid, satid=self.identity, sourceid=sourceid, ue_utility=ue_utility)
+        self.access_Q.insert(ueid, delay)
+        return condition
 
 

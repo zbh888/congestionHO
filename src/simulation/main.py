@@ -37,10 +37,6 @@ if __name__ == "__main__":
     # configuration
     # When oracle_simulation is False, the oracle_assignment could be True/False
     # When oracle_simulation is True, the oracle_assignment must be True
-    max_access_opportunity = 4
-    max_access_slots = 100
-    oracle_assignment = False
-    oracle_simulation = False
     if oracle_simulation:
         assert (oracle_assignment)
     random.seed(10)

@@ -38,8 +38,9 @@ class UE(Base):
 
         # Running Process
         env.process(self.init())
-        self.env.process(self.action_monitor())
-        self.env.process(self.handle_messages())
+        if self.identity == 1:
+            self.env.process(self.action_monitor())
+            self.env.process(self.handle_messages())
 
     # ====== UE functions ======
     def action_monitor(self):
@@ -52,7 +53,7 @@ class UE(Base):
                     and self.coverage_info[self.identity, self.serving_satellite.identity, now] == 1
                     and self.coverage_info[self.identity, self.serving_satellite.identity, next] == 0):
                 covered_satellites_now = np.where(self.coverage_info[self.identity, :, now] == 1)[0]
-                covered_satellites_future = np.where(self.coverage_info[self.identity, :, min(now+25, self.DURATION-1)] == 1)[0]
+                covered_satellites_future = np.where(self.coverage_info[self.identity, :, min(now+WINDOW_SIZE, self.DURATION-1)] == 1)[0]
                 possible_candidates = np.intersect1d(covered_satellites_now, covered_satellites_future)
                 candidates = self.select_candidates(possible_candidates)
                 assert (len(candidates) > 0)
@@ -140,7 +141,7 @@ class UE(Base):
                 candidate_utility = []
                 for satid in candidates:
                     serving_time = self.estimate_serving_length(satid)
-                    if serving_time > 20:
+                    if serving_time > WINDOW_SIZE: # TODO This may be adjusted to min_serving_time
                         candidate_utility.append((satid, self.estimate_serving_length(satid)))
                 sorted_list = sorted(candidate_utility, key=lambda x: -x[1])
                 # find best three TODO not tested
