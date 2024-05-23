@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+from Config import *
 
 
 class allCounters:
@@ -13,6 +14,7 @@ class allCounters:
         self.N_TIME = satellites[0].DURATION
         self.time_sat_matrix = self.generate_time_sat_matrix()
         self.time_sat_matrix_flatten = self.time_sat_matrix.flatten()
+        self.resultpath = RESULT_PATH
 
     def generate_time_sat_matrix(self):
         res = []
@@ -44,7 +46,7 @@ class allCounters:
         plt.xticks([])
         plt.yticks(fontsize=120)
 
-        plt.savefig('heatmap.png')
+        plt.savefig(self.resultpath + 'heatmap.png')
         sns.set(font_scale=1)
         plt.close()
 
@@ -58,7 +60,7 @@ class allCounters:
         plt.ylabel('Probability')
         plt.title('Cumulative plot for signalling load each slot')
         plt.grid(True)
-        plt.savefig('cumulative.png')
+        plt.savefig(self.resultpath+'cumulative.png')
         plt.close()
 
 
@@ -80,7 +82,7 @@ class allCounters:
         plt.xlabel('Index')
         plt.ylabel('Total signalling load')
         plt.title('Sorted total signalling load each satellite')
-        plt.savefig('total_each_satellite.png')
+        plt.savefig(self.resultpath+'total_each_satellite.png')
         plt.close()
 
 
@@ -120,14 +122,14 @@ class allCounters:
         plt.ylabel('Busy slot count')
         plt.title('Sorted busy slot count each satellite')
         plt.grid(True)
-        plt.savefig('draw_busy_hour_distribution.png')
+        plt.savefig(self.resultpath+'draw_busy_hour_distribution.png')
         plt.close()
 
 
     def give_result(self, interval):
         x = self.time_sat_matrix_flatten[self.time_sat_matrix_flatten != 0]
         mean, var, cutoff_value = self.highest_25_percent_mean_variance(x)
-        with open("result_stat.txt", "w") as file:
+        with open(self.resultpath+"result_stat.txt", "w") as file:
             file.write(f"Total signalling: {self.generate_total_signalling()}\n")
             file.write(f"Total handover: {self.generate_total_handover()}\n")
             file.write(f"Non-Empty time: {np.sum(self.time_sat_matrix_flatten != 0)}\n")

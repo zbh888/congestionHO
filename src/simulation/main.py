@@ -4,6 +4,7 @@ from UE import *
 from Satellite import *
 from Oracle import *
 import time
+import os
 
 
 def initial_assignment(UEss, Satss, oracle):
@@ -34,6 +35,12 @@ def monitor_timestamp(env):
 
 
 if __name__ == "__main__":
+    if not os.path.exists(RESULT_PATH):
+        # Create the directory
+        os.makedirs(RESULT_PATH)
+    else:
+        print(f"Directory '{RESULT_PATH}' already exists.")
+        sys.exit()
     # configuration
     # When oracle_simulation is False, the oracle_assignment could be True/False
     # When oracle_simulation is True, the oracle_assignment must be True
