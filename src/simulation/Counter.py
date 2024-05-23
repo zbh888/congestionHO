@@ -34,8 +34,18 @@ class allCounters:
         result = np.sum(res_reshaped, axis=2)
 
         plt.figure(figsize=(100, 80))
+        sns.set(font_scale=20)
         sns.heatmap(result, annot=False, cmap='coolwarm')
+        plt.xlabel('Time', fontsize=120)
+        plt.ylabel('Index', fontsize=120)
+        plt.title('Heatmap of signalling load each slot', fontsize=150)
+
+        # Adjust tick label size
+        plt.xticks([])
+        plt.yticks(fontsize=120)
+
         plt.savefig('heatmap.png')
+        sns.set(font_scale=1)
         plt.close()
 
     def generate_cumulative_load_each_time(self):
@@ -44,6 +54,9 @@ class allCounters:
         counts, bin_edges = np.histogram(x, bins=num_bins, density=True)
         cdf = np.cumsum(counts * np.diff(bin_edges))
         plt.plot(bin_edges[1:], cdf, marker='none', linestyle='-')
+        plt.xlabel('Signalling load each slot')
+        plt.ylabel('Probability')
+        plt.title('Cumulative plot for signalling load each slot')
         plt.grid(True)
         plt.savefig('cumulative.png')
         plt.close()
@@ -64,6 +77,9 @@ class allCounters:
         sorted_data = np.sort(x)
         plt.plot(sorted_data, marker='', linestyle='-', color='b')
         plt.grid(True)
+        plt.xlabel('Index')
+        plt.ylabel('Total signalling load')
+        plt.title('Sorted total signalling load each satellite')
         plt.savefig('total_each_satellite.png')
         plt.close()
 
@@ -100,6 +116,9 @@ class allCounters:
         print(count_greater_than_cutoff)
         sorted_data = np.sort(count_greater_than_cutoff)
         plt.plot(sorted_data, marker='', linestyle='-', color='b')
+        plt.xlabel('Index')
+        plt.ylabel('Busy slot count')
+        plt.title('Sorted busy slot count each satellite')
         plt.grid(True)
         plt.savefig('draw_busy_hour_distribution.png')
         plt.close()
