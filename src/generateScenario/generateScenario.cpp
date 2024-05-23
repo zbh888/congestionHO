@@ -23,18 +23,18 @@ double computeVFromH(double h) {
 // Class for satellite
 class Satellite {
 private:
-    double x, y, h, v, r, sind, cosd;
+    double x, y, h, v, r, sind, cosd, tid;
 
 public:
-    Satellite(double h_, double d, double x_, double y_, double c_r) :
-            x(x_), y(y_), h(h_), r(c_r) {
-        v = computeVFromH(h * 1000) / 1000;
+    Satellite(double h_, double d, double x_, double y_, double c_r, double t_id) :
+            x(x_), y(y_), h(h_), r(c_r), tid(t_id) {
+        v = computeVFromH(h * 1000) / 1000; //km/s
         sind = std::sin(M_PI * d / 180.0);
         cosd = std::cos(M_PI * d / 180.0);
     }
 
     std::pair<double, double> calculateLocation(double t, double t_unit) {
-        double dis = v * t * t_unit;
+        double dis = v * t * t_unit; // km/s * s
         double y_new = dis * sind;
         double x_new = dis * cosd;
         return std::make_pair(x + x_new, y + y_new);
@@ -55,7 +55,8 @@ public:
             {"v", v},
             {"r", r},
             {"sind", sind},
-            {"cosd", cosd}
+            {"cosd", cosd},
+            {"tid", tid}
         };
     }
 };
@@ -119,15 +120,15 @@ UE generateUE(std::mt19937 &gen) {
     std::uniform_real_distribution<> dis(0, 1);
     double randomNum = dis(gen);
     if (randomNum < 0.5) {
-        std::uniform_real_distribution<> disx(-100, 100);
+        std::uniform_real_distribution<> disx(-25, 25);
         double x = disx(gen);
-        std::uniform_real_distribution<> disy(-75, 75);
+        std::uniform_real_distribution<> disy(-25, 25);
         double y = disy(gen);
         return UE(x, y);
     } else {
-        std::uniform_real_distribution<> disx(-350, -250);
+        std::uniform_real_distribution<> disx(-350, -300);
         double x = disx(gen);
-        std::uniform_real_distribution<> disy(-75, 75);
+        std::uniform_real_distribution<> disy(-25, 25);
         double y = disy(gen);
         return UE(x, y);
     }
@@ -136,23 +137,22 @@ UE generateUE(std::mt19937 &gen) {
 // Class for trajectory
 class Trajectory {
 private:
-    double d, inter_satellite_distance, lead_x, lead_y, h, c_r;
-
+    double d, inter_satellite_distance, lead_x, lead_y, h, c_r, tid;
 public:
-    Trajectory(double d_, double h_, double inter_d, double lead_x_, double lead_y_, double cov_r) :
-            d(d_), inter_satellite_distance(inter_d), lead_x(lead_x_), lead_y(lead_y_), h(h_), c_r(cov_r) {}
+    Trajectory(double d_, double h_, double inter_d, double lead_x_, double lead_y_, double cov_r, double t_id) :
+            d(d_), inter_satellite_distance(inter_d), lead_x(lead_x_), lead_y(lead_y_), h(h_), c_r(cov_r), tid(t_id) {}
 
     Satellite generateSatellite(int n) {
         double dis = inter_satellite_distance * n;
         double y_ = lead_y + dis * std::sin(M_PI * (d + 180) / 180.0);
         double x_ = lead_x + dis * std::cos(M_PI * (d + 180) / 180.0);
-        return Satellite(h, d, x_, y_, c_r);
+        return Satellite(h, d, x_, y_, c_r, tid);
     }
 };
 
 int main() {
     int seed = 20702017;
-    int N_satellites_one_trajectory = 10;
+    int N_satellites_one_trajectory = 9;
     int N_UE = 500;
     double T_TOTAL = 200;
     double T_UNIT = 1;
@@ -160,8 +160,8 @@ int main() {
 
     bool feasible = true;
 
-    Trajectory t1(0, 300, 250, 0, 0, 200);
-    Trajectory t2(45, 700, 250, -150, 0, 200);
+    Trajectory t1(0, 300, 250, 0, 0, 200, 1);
+    Trajectory t2(45, 700, 250, -150, 0, 200, 2);
 
     std::vector <UE> UEs;
     std::vector <Satellite> satellites;
@@ -232,6 +232,10 @@ int main() {
     std::ofstream outputFileUE("UEs.json");
     outputFileUE << UEsJson.dump(4); // Use 4 spaces for indentation
     outputFileUE.close();
+
+    std::ofstream outfileduration("duration.txt");
+    outfileduration << T_TOTAL;
+    outfileduration.close();
 
     std::cout << "Time taken to save: " << std::chrono::duration_cast<std::chrono::milliseconds>(end2 - end).count()
               << " milliseconds" << std::endl;
