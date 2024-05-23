@@ -87,16 +87,27 @@ class allCounters:
 
         # Select the highest 25%
         top_25_percent = sorted_numbers[:cutoff_index]
-
+        
         # Calculate the mean and variance
         mean_top_25 = np.mean(top_25_percent)
         variance_top_25 = np.var(top_25_percent)
 
-        return mean_top_25, variance_top_25
+        return mean_top_25, variance_top_25, top_25_percent[-1]
+
+    def draw_busy_hour_distribution(self, cutoff):
+        mask = self.time_sat_matrix >= cutoff
+        count_greater_than_cutoff = np.sum(mask, axis=1)
+        print(count_greater_than_cutoff)
+        sorted_data = np.sort(count_greater_than_cutoff)
+        plt.plot(sorted_data, marker='', linestyle='-', color='b')
+        plt.grid(True)
+        plt.savefig('draw_busy_hour_distribution.png')
+        plt.close()
+
 
     def give_result(self, interval):
         x = self.time_sat_matrix_flatten[self.time_sat_matrix_flatten != 0]
-        mean, var = self.highest_25_percent_mean_variance(x)
+        mean, var, cutoff_value = self.highest_25_percent_mean_variance(x)
         with open("result_stat.txt", "w") as file:
             file.write(f"Total signalling: {self.generate_total_signalling()}\n")
             file.write(f"Total handover: {self.generate_total_handover()}\n")
@@ -107,6 +118,7 @@ class allCounters:
         self.generate_delay_box()
         self.generate_cumulative_load_each_time()
         self.generate_total_load_each_satellite()
+        self.draw_busy_hour_distribution(cutoff_value)
         # there should be a measurement to see if busy time all gathering to one satellite, a list containing [10, 20, 0,0] each enty is satellite
 
 
