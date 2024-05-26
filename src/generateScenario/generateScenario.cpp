@@ -126,7 +126,7 @@ UE generateUE(std::mt19937 &gen) {
         double y = disy(gen);
         return UE(x, y);
     } else {
-        std::uniform_real_distribution<> disx(-350, -300);
+        std::uniform_real_distribution<> disx(-125, -75);
         double x = disx(gen);
         std::uniform_real_distribution<> disy(-25, 25);
         double y = disy(gen);
@@ -142,7 +142,7 @@ public:
     Trajectory(double d_, double h_, double inter_d, double lead_x_, double lead_y_, double cov_r, double t_id) :
             d(d_), inter_satellite_distance(inter_d), lead_x(lead_x_), lead_y(lead_y_), h(h_), c_r(cov_r), tid(t_id) {}
 
-    Satellite generateSatellite(int n) {
+    Satellite generateSatellite(int n) const {
         double dis = inter_satellite_distance * n;
         double y_ = lead_y + dis * std::sin(M_PI * (d + 180) / 180.0);
         double x_ = lead_x + dis * std::cos(M_PI * (d + 180) / 180.0);
@@ -153,15 +153,21 @@ public:
 int main() {
     int seed = 20702017;
     int N_satellites_one_trajectory = 9;
-    int N_UE = 500;
+    int N_UE = 20;
     double T_TOTAL = 200;
     double T_UNIT = 1;
     double T_UNIT2 = 0.01;
 
     bool feasible = true;
 
-    Trajectory t1(0, 300, 250, 0, 0, 200, 1);
-    Trajectory t2(45, 700, 250, -150, 0, 200, 2);
+    std::vector<Trajectory> trajectories = {
+        Trajectory(0, 300, 250, 0, 100, 200, 1),
+        Trajectory(0, 300, 250, 100, -100, 200, 1),
+        Trajectory(-45, 700, 250, -50, 90, 200, 2),
+        Trajectory(-45, 700, 250, -50-50*1.414, 90-200*1.414+50, 200, 2),
+        Trajectory(45, 1100, 250, -150, 0, 200, 3),
+        Trajectory(45, 1100, 250, -150+50*1.414, 0-200*1.414+50, 200, 3)
+    };
 
     std::vector <UE> UEs;
     std::vector <Satellite> satellites;
@@ -174,8 +180,9 @@ int main() {
 
     // Create satellites based on trajectory
     for (int i = 0; i < N_satellites_one_trajectory; ++i) {
-        satellites.push_back(t1.generateSatellite(i));
-        satellites.push_back(t2.generateSatellite(i));
+        for (const auto& trajectory_i : trajectories) {
+            satellites.push_back(trajectory_i.generateSatellite(i));
+        }
     }
 
     auto start = std::chrono::high_resolution_clock::now();

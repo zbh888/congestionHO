@@ -89,6 +89,10 @@ for x, y, r, tid in zip(Sat_x, Sat_y, Sat_r, Sat_tid):
         color = 'r'
     if tid == 2:
         color = 'b'
+    if tid == 3:
+        color = 'brown'
+    if tid == 4:
+        color = 'yellow'
     circle = plt.Circle((x, y), r, edgecolor=color, facecolor='none')
     ax.add_patch(circle)
 
