@@ -152,7 +152,7 @@ public:
 
 int main() {
     int seed = 20702017;
-    int N_satellites_one_trajectory = 9;
+    int N_satellites_one_trajectory = 8;
     int N_UE = 20;
     double T_TOTAL = 200;
     double T_UNIT = 1;
