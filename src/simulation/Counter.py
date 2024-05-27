@@ -2,10 +2,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 from Config import *
+import pickle
 
 
 class allCounters:
     def __init__(self, satellites, UEs):
+        self.result = {}
         self.all_counter = {}
         self.UEs = UEs
         for satid in satellites:
@@ -14,10 +16,6 @@ class allCounters:
         self.N_TIME = satellites[0].DURATION
         self.time_sat_matrix = self.generate_time_sat_matrix()
         self.time_sat_matrix_flatten = self.time_sat_matrix.flatten()
-        self.resultpath = RESULT_PATH
-
-        self.result = {}
-
 
 
     def generate_time_sat_matrix(self):
@@ -31,6 +29,7 @@ class allCounters:
                     count += counter_sat_t[header]
                 sat_res.append(count)
             res.append(sat_res)
+
         self.result['time_sat_matrix'] = res
         return np.array(res)
 
@@ -122,7 +121,6 @@ class allCounters:
     def draw_busy_hour_distribution(self, cutoff):
         mask = self.time_sat_matrix >= cutoff
         count_greater_than_cutoff = np.sum(mask, axis=1)
-        print(count_greater_than_cutoff)
         sorted_data = np.sort(count_greater_than_cutoff)
         plt.plot(sorted_data, marker='', linestyle='-', color='b')
         plt.xlabel('Index')
@@ -134,19 +132,21 @@ class allCounters:
 
 
     def give_result(self, interval):
-        x = self.time_sat_matrix_flatten[self.time_sat_matrix_flatten != 0]
-        mean, var, cutoff_value = self.highest_25_percent_mean_variance(x)
-        with open(self.resultpath+"result_stat.txt", "w") as file:
-            file.write(f"Total signalling: {self.generate_total_signalling()}\n")
-            file.write(f"Total handover: {self.generate_total_handover()}\n")
-            file.write(f"Non-Empty time: {np.sum(self.time_sat_matrix_flatten != 0)}\n")
-            file.write(f"Non-Empty time top 25% mean: {mean}\n")
-            file.write(f"Non-Empty time top 25% variance: {var}\n")
-        self.generate_heap_map(interval)
-        self.generate_delay_box()
-        self.generate_cumulative_load_each_time()
-        self.generate_total_load_each_satellite()
-        self.draw_busy_hour_distribution(cutoff_value)
+        # x = self.time_sat_matrix_flatten[self.time_sat_matrix_flatten != 0]
+        # mean, var, cutoff_value = self.highest_25_percent_mean_variance(x)
+        # with open(self.resultpath+"result_stat.txt", "w") as file:
+        #     file.write(f"Total signalling: {self.generate_total_signalling()}\n")
+        #     file.write(f"Total handover: {self.generate_total_handover()}\n")
+        #     file.write(f"Non-Empty time: {np.sum(self.time_sat_matrix_flatten != 0)}\n")
+        #     file.write(f"Non-Empty time top 25% mean: {mean}\n")
+        #     file.write(f"Non-Empty time top 25% variance: {var}\n")
+        # self.generate_heap_map(interval)
+        # self.generate_delay_box()
+        # self.generate_cumulative_load_each_time()
+        # self.generate_total_load_each_satellite()
+        # self.draw_busy_hour_distribution(cutoff_value)
+        with open(RESULT_PATH, 'wb') as file:
+            pickle.dump(self.result, file)
 
 
 class counter:

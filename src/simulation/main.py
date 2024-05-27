@@ -35,12 +35,6 @@ def monitor_timestamp(env):
 
 
 if __name__ == "__main__":
-    if not os.path.exists(RESULT_PATH):
-        # Create the directory
-        os.makedirs(RESULT_PATH)
-    else:
-        print(f"Directory '{RESULT_PATH}' already exists.")
-        sys.exit()
     SOURCE_ALG = sys.argv[1]
     CANDIDATE_ALG = sys.argv[2]
     # configuration
