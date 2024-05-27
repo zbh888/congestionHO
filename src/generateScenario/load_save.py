@@ -1,6 +1,9 @@
 import struct
 import numpy as np
+import time
 
+start = time.time()
+print("Translating bin to npy")
 feasible = True
 
 with open("./data_simulation.bin", "rb") as file:
@@ -36,4 +39,4 @@ with open("./data_optimizer.bin", "rb") as file:
 C = np.array(data)
 
 np.save('optimizer_coverage_info.npy', C)
-
+print(f"Translation costs {time.time() - start}")
