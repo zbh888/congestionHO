@@ -41,6 +41,8 @@ if __name__ == "__main__":
     else:
         print(f"Directory '{RESULT_PATH}' already exists.")
         sys.exit()
+    SOURCE_ALG = sys.argv[1]
+    CANDIDATE_ALG = sys.argv[2]
     # configuration
     # When oracle_simulation is False, the oracle_assignment could be True/False
     # When oracle_simulation is True, the oracle_assignment must be True

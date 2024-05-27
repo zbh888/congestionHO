@@ -16,6 +16,10 @@ class allCounters:
         self.time_sat_matrix_flatten = self.time_sat_matrix.flatten()
         self.resultpath = RESULT_PATH
 
+        self.result = {}
+
+
+
     def generate_time_sat_matrix(self):
         res = []
         for satid in range(self.N_SAT):
@@ -27,6 +31,7 @@ class allCounters:
                     count += counter_sat_t[header]
                 sat_res.append(count)
             res.append(sat_res)
+        self.result['time_sat_matrix'] = res
         return np.array(res)
 
     def generate_heap_map(self, interval):
@@ -40,7 +45,7 @@ class allCounters:
         sns.heatmap(result, annot=False, cmap='coolwarm')
         plt.xlabel('Time', fontsize=120)
         plt.ylabel('Index', fontsize=120)
-        plt.title('Heatmap of signalling load each slot', fontsize=150)
+        plt.title(f'Heatmap of signalling load every {interval} slot', fontsize=150)
 
         # Adjust tick label size
         plt.xticks([])
@@ -69,6 +74,7 @@ class allCounters:
         for ueid in self.UEs:
             ue = self.UEs[ueid]
             total.append(sum(ue.applied_delay_history) / len(ue.applied_delay_history))
+        self.result['delay_box'] = total
         plt.boxplot(total)
         plt.ylabel('Delay')
         plt.savefig('box.png')
@@ -91,6 +97,7 @@ class allCounters:
         for ueid in self.UEs:
             ue = self.UEs[ueid]
             total_handover_count += (len(ue.serving_satellite_history) - 1)
+        self.result['total_handover'] = total_handover_count
         return total_handover_count
 
     def generate_total_signalling(self):
@@ -140,9 +147,6 @@ class allCounters:
         self.generate_cumulative_load_each_time()
         self.generate_total_load_each_satellite()
         self.draw_busy_hour_distribution(cutoff_value)
-        # there should be a measurement to see if busy time all gathering to one satellite, a list containing [10, 20, 0,0] each enty is satellite
-
-
 
 
 class counter:
