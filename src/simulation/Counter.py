@@ -14,9 +14,9 @@ class allCounters:
             self.all_counter[satid] = satellites[satid].counter
         self.N_SAT = len(satellites)
         self.N_TIME = satellites[0].DURATION
-        self.time_sat_matrix = self.generate_time_sat_matrix()
-        self.time_sat_matrix_flatten = self.time_sat_matrix.flatten()
-
+        self.generate_time_sat_matrix()
+        self.generate_total_handover()
+        # self.time_sat_matrix_flatten = self.time_sat_matrix.flatten()
 
     def generate_time_sat_matrix(self):
         res = []
@@ -29,9 +29,14 @@ class allCounters:
                     count += counter_sat_t[header]
                 sat_res.append(count)
             res.append(sat_res)
-
         self.result['time_sat_matrix'] = res
-        return np.array(res)
+
+    def generate_total_handover(self):
+        total_handover_count = 0
+        for ueid in self.UEs:
+            ue = self.UEs[ueid]
+            total_handover_count += (len(ue.serving_satellite_history) - 1)
+        self.result['total_handover'] = total_handover_count
 
     def generate_heap_map(self, interval):
         assert (self.N_TIME % interval == 0)
@@ -64,9 +69,8 @@ class allCounters:
         plt.ylabel('Probability')
         plt.title('Cumulative plot for signalling load each slot')
         plt.grid(True)
-        plt.savefig(self.resultpath+'cumulative.png')
+        plt.savefig(self.resultpath + 'cumulative.png')
         plt.close()
-
 
     def generate_delay_box(self):
         total = []
@@ -80,27 +84,15 @@ class allCounters:
         plt.close()
 
     def generate_total_load_each_satellite(self):
-        x = np.sum(self.time_sat_matrix, axis = 1)
+        x = np.sum(self.time_sat_matrix, axis=1)
         sorted_data = np.sort(x)
         plt.plot(sorted_data, marker='', linestyle='-', color='b')
         plt.grid(True)
         plt.xlabel('Index')
         plt.ylabel('Total signalling load')
         plt.title('Sorted total signalling load each satellite')
-        plt.savefig(self.resultpath+'total_each_satellite.png')
+        plt.savefig(self.resultpath + 'total_each_satellite.png')
         plt.close()
-
-
-    def generate_total_handover(self):
-        total_handover_count = 0
-        for ueid in self.UEs:
-            ue = self.UEs[ueid]
-            total_handover_count += (len(ue.serving_satellite_history) - 1)
-        self.result['total_handover'] = total_handover_count
-        return total_handover_count
-
-    def generate_total_signalling(self):
-        return np.sum(self.time_sat_matrix)
 
     def highest_25_percent_mean_variance(self, nnumbers):
         # Sort the list in descending order
@@ -111,7 +103,7 @@ class allCounters:
 
         # Select the highest 25%
         top_25_percent = sorted_numbers[:cutoff_index]
-        
+
         # Calculate the mean and variance
         mean_top_25 = np.mean(top_25_percent)
         variance_top_25 = np.var(top_25_percent)
@@ -127,9 +119,8 @@ class allCounters:
         plt.ylabel('Busy slot count')
         plt.title('Sorted busy slot count each satellite')
         plt.grid(True)
-        plt.savefig(self.resultpath+'draw_busy_hour_distribution.png')
+        plt.savefig(self.resultpath + 'draw_busy_hour_distribution.png')
         plt.close()
-
 
     def give_result(self, interval):
         # x = self.time_sat_matrix_flatten[self.time_sat_matrix_flatten != 0]
