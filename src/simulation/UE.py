@@ -52,7 +52,8 @@ class UE(Base):
                     and self.coverage_info[self.identity, self.serving_satellite.identity, now] == 1
                     and self.coverage_info[self.identity, self.serving_satellite.identity, next] == 0):
                 covered_satellites_now = np.where(self.coverage_info[self.identity, :, now] == 1)[0]
-                covered_satellites_future = np.where(self.coverage_info[self.identity, :, min(now+WINDOW_SIZE, self.DURATION-1)] == 1)[0]
+                covered_satellites_future = \
+                np.where(self.coverage_info[self.identity, :, min(now + WINDOW_SIZE, self.DURATION - 1)] == 1)[0]
                 possible_candidates = np.intersect1d(covered_satellites_now, covered_satellites_future)
                 candidates = self.select_candidates(possible_candidates)
                 assert (len(candidates) > 0)
@@ -113,6 +114,7 @@ class UE(Base):
                 self.serving_satellite_history.append(target_id)
                 self.applied_delay_history.append(self.condition.delay)
                 self.condition = None
+
     def determine_if_access(self):
         return self.condition.access_time == self.env.now
 
@@ -140,13 +142,13 @@ class UE(Base):
                 candidate_utility = []
                 for satid in candidates:
                     serving_time = self.estimate_serving_length(satid)
-                    if serving_time > WINDOW_SIZE: # TODO This may be adjusted to min_serving_time
+                    if serving_time > WINDOW_SIZE:  # TODO This may be adjusted to min_serving_time
                         candidate_utility.append((satid, self.estimate_serving_length(satid)))
                 sorted_list = sorted(candidate_utility, key=lambda x: -x[1])
                 # find best candidates
                 selected_candidates = [x[0] for x in sorted_list][:NUMBER_CANDIDATE]
                 # random
-                #selected_candidates = random.sample(candidates, NUMBER_CANDIDATE)
+                # selected_candidates = random.sample(candidates, NUMBER_CANDIDATE)
                 return np.array(selected_candidates)
             else:
                 return candidates
@@ -157,6 +159,4 @@ class UE(Base):
         if len(x) == 0:
             return 1e7
         else:
-            return int(x[0]-1)
-
-
+            return int(x[0] - 1)

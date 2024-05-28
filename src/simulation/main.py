@@ -86,10 +86,10 @@ if __name__ == "__main__":
                 sind=sat_template.sind,
                 cosd=sat_template.cosd,
                 coverage_info=C,
-                max_access_opportunity = max_access_opportunity,
-                max_access_slots = max_access_slots,
+                max_access_opportunity=max_access_opportunity,
+                max_access_slots=max_access_slots,
                 env=env,
-                oracle = simulation_oracle,
+                oracle=simulation_oracle,
             )
         else:
             print("ERROR")

@@ -48,7 +48,6 @@ class allCounters:
         plt.savefig('box.png')
         plt.close()
 
-
     def give_result(self):
         with open(RESULT_PATH, 'wb') as file:
             pickle.dump(self.result, file)

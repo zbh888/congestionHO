@@ -23,11 +23,11 @@ class Base:
         self.satellites = None
 
     def init(self):
-      #  print(
-      #      f"{self.type} {self.identity} deployed at time {self.env.now}, positioned at ({self.position_x},{self.position_y})")
-      #  if self.type == "UE" and self.serving_satellite is not None:
-      #      print(
-      #          f"{self.type} {self.identity} is served by {self.serving_satellite.type} {self.serving_satellite.identity}")
+        #  print(
+        #      f"{self.type} {self.identity} deployed at time {self.env.now}, positioned at ({self.position_x},{self.position_y})")
+        #  if self.type == "UE" and self.serving_satellite is not None:
+        #      print(
+        #          f"{self.type} {self.identity} is served by {self.serving_satellite.type} {self.serving_satellite.identity}")
         yield self.env.timeout(1)
 
     def send_message(self, msg, to):

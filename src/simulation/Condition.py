@@ -15,9 +15,9 @@ class Sat_condition:
             "ue_utility": self.ue_utility
         }
 
+
 class UE_condition:
     def __init__(self, targetid, delay, now):
         self.targetid = targetid
         self.delay = delay
         self.access_time = delay + now
-

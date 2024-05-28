@@ -42,7 +42,6 @@ class Satellite(Base):
         self.current_assigned_slot = None
         self.oracle = oracle
 
-
         # === source function ===
         # condition_record[ueid] stores the received conditions from candidates ([Sat_condition, ..., Sat_condition])
         self.condition_record = {}
@@ -134,8 +133,8 @@ class Satellite(Base):
             if task == RANDOM_ACCESS:
                 # Response to UE
                 ueid = data['from']
-                assert(self.current_assigned_slot.include(ueid))
-                assert(self.current_assigned_slot.time == self.env.now)
+                assert (self.current_assigned_slot.include(ueid))
+                assert (self.current_assigned_slot.time == self.env.now)
                 takeover_condition = self.takeover_condition_record[ueid]
                 UE_who_requested = self.UEs[ueid]
                 data = {
@@ -223,7 +222,7 @@ class Satellite(Base):
         else:
             if SOURCE_ALG == SOURCE_ALG_RANDOM:
                 selected_condition = random.choice(conditions)
-            if SOURCE_ALG == SOURCE_ALG_EARLIEST: # shortest delay
+            if SOURCE_ALG == SOURCE_ALG_EARLIEST:  # shortest delay
                 min_delay = WINDOW_SIZE * 2
                 condition_indices_with_shortest_delay = []
                 for condition in conditions:
@@ -232,7 +231,7 @@ class Satellite(Base):
                     if min_delay == condition['access_delay']:
                         condition_indices_with_shortest_delay.append(index)
                 selected_condition = conditions[random.choice(condition_indices_with_shortest_delay)]
-            if SOURCE_ALG == SOURCE_ALG_LONGEST: # longest serving
+            if SOURCE_ALG == SOURCE_ALG_LONGEST:  # longest serving
                 max_serving = -1
                 condition_indices_with_max_serving = []
                 for condition in conditions:
@@ -247,7 +246,7 @@ class Satellite(Base):
 
     # This is a candidate satellite function
     def decide_delay(self, ueid, sourceid, candidates, utilities):
-        assert(self.access_Q.counter - self.access_Q.max_access_slots == self.env.now)
+        assert (self.access_Q.counter - self.access_Q.max_access_slots == self.env.now)
         available_slots = self.access_Q.available_slots()
         if CANDIDATE_ALG == CANDIDATE_ALG_EARLIEST:
             # greedy
@@ -263,8 +262,7 @@ class Satellite(Base):
         # TODO Should we consider the case when access time cannot happen with handover at the same time?
         if self.env.now + delay < self.DURATION:
             assert (self.coverage_info[ueid, self.identity, self.env.now + delay] == 1)
-        condition = Sat_condition(access_delay=delay, ueid=ueid, satid=self.identity, sourceid=sourceid, ue_utility=ue_utility)
+        condition = Sat_condition(access_delay=delay, ueid=ueid, satid=self.identity, sourceid=sourceid,
+                                  ue_utility=ue_utility)
         self.access_Q.insert(ueid, delay)
         return condition
-
-
