@@ -22,3 +22,5 @@ for s in "${S_ALG[@]}"; do
     done
   done
 done
+
+zip -r result.zip result/*
