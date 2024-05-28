@@ -111,4 +111,4 @@ if __name__ == "__main__":
     env.run(until=DURATION)
     print('============= Experiment Ends =============')
     counter = allCounters(Satellites, UEs)
-    counter.give_result(100)
+    counter.give_result()
