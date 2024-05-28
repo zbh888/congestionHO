@@ -3,6 +3,7 @@
 # Define the arrays
 S_ALG=('S_LONGEST' 'S_EARLIEST' 'S_RANDOM')
 C_ALG=('C_EARLIEST' 'C_RANDOM')
+U_ALG=('UE_LONGEST' 'UE_RANDOM')
 
 #S_ALG=('S_LONGEST')
 #C_ALG=('C_EARLIEST' 'C_RANDOM')
@@ -11,7 +12,8 @@ C_ALG=('C_EARLIEST' 'C_RANDOM')
 for s in "${S_ALG[@]}"; do
   # Loop through each element in C_ALG
   for c in "${C_ALG[@]}"; do
-    # Print the combination
-    python3 main.py $s $c 1> ./result/${s}${c}logs.txt
+    for u in "${U_ALG[@]}"; do
+      python3 main.py $s $c $u 1> ./result/${s}${c}${u}logs.txt
+    done
   done
 done

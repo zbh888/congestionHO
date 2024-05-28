@@ -146,9 +146,13 @@ class UE(Base):
                         candidate_utility.append((satid, self.estimate_serving_length(satid)))
                 sorted_list = sorted(candidate_utility, key=lambda x: -x[1])
                 # find best candidates
-                selected_candidates = [x[0] for x in sorted_list][:NUMBER_CANDIDATE]
+                if UE_ALG == UE_ALG_LONGEST:
+                    selected_candidates = [x[0] for x in sorted_list][:NUMBER_CANDIDATE]
                 # random
-                # selected_candidates = random.sample(candidates, NUMBER_CANDIDATE)
+                if UE_ALG == UE_ALG_RANDOM:
+                    selected_candidates = random.sample(candidates.tolist(), NUMBER_CANDIDATE)
+                else:
+                    print(UE_ALG)
                 return np.array(selected_candidates)
             else:
                 return candidates
