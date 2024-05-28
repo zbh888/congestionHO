@@ -1,6 +1,4 @@
 import matplotlib.pyplot as plt
-import numpy as np
-import seaborn as sns
 from Config import *
 import pickle
 
@@ -10,12 +8,21 @@ class allCounters:
         self.result = {}
         self.all_counter = {}
         self.UEs = UEs
+        self.satellites = satellites
         for satid in satellites:
             self.all_counter[satid] = satellites[satid].counter
         self.N_SAT = len(satellites)
         self.N_TIME = satellites[0].DURATION
         self.generate_time_sat_matrix()
         self.generate_total_handover()
+        self.generate_max_delay()
+
+    def generate_max_delay(self):
+        max_delay = []
+        for satid in self.satellites:
+            max_delay.append(self.satellites[satid].record_max_delay)
+        self.result['max_delays'] = max_delay
+
 
     def generate_time_sat_matrix(self):
         res = []

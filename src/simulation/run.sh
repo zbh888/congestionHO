@@ -1,19 +1,24 @@
 #!/bin/bash
 
 # Define the arrays
-S_ALG=('S_LONGEST' 'S_EARLIEST' 'S_RANDOM')
-C_ALG=('C_EARLIEST' 'C_RANDOM')
-U_ALG=('UE_LONGEST' 'UE_RANDOM')
-
-#S_ALG=('S_LONGEST')
+#S_ALG=('S_LONGEST' 'S_EARLIEST' 'S_RANDOM')
 #C_ALG=('C_EARLIEST' 'C_RANDOM')
+#U_ALG=('UE_LONGEST' 'UE_RANDOM')
+#Max_ACC=('16' '32' '64')
+
+S_ALG=('S_LONGEST')
+C_ALG=('C_EARLIEST')
+U_ALG=('UE_LONGEST')
+Max_ACC=('4' '1')
 
 # Loop through each element in S_ALG
 for s in "${S_ALG[@]}"; do
   # Loop through each element in C_ALG
   for c in "${C_ALG[@]}"; do
     for u in "${U_ALG[@]}"; do
-      python3 main.py $s $c $u 1> ./result/${s}${c}${u}logs.txt
+      for a in "${Max_ACC[@]}"; do
+        python3 main.py $s $c $u $a 1> ./result/${s}${c}${u}${a}logs.txt
+      done
     done
   done
 done

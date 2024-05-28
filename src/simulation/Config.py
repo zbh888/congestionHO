@@ -16,7 +16,6 @@ HANDOVER_CANCEL = "HANDOVER_CANCEL"
 
 NUMBER_CANDIDATE = 3
 WINDOW_SIZE = 100
-max_access_opportunity = 4
 max_access_slots = WINDOW_SIZE
 oracle_assignment = False
 oracle_simulation = False
@@ -33,7 +32,9 @@ CANDIDATE_ALG_OUR = "CANDIDATE_ALG_OUR"
 UE_ALG_LONGEST = "UE_LONGEST"
 UE_ALG_RANDOM = "UE_RANDOM"
 
+# Modify this list if you have anything to compare
 SOURCE_ALG = sys.argv[1]
 CANDIDATE_ALG = sys.argv[2]
 UE_ALG = sys.argv[3]
-RESULT_PATH = "./result/" + SOURCE_ALG + '|' + CANDIDATE_ALG + '|' + UE_ALG + '.pkl'
+max_access_opportunity = int(sys.argv[4])
+RESULT_PATH = "./result/" + SOURCE_ALG + '|' + CANDIDATE_ALG + '|' + UE_ALG + '|' + str(max_access_opportunity) + '.pkl'

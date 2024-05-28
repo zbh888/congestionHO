@@ -41,6 +41,7 @@ class Satellite(Base):
         self.access_Q = Queue(max_access_opportunity, max_access_slots)
         self.current_assigned_slot = None
         self.oracle = oracle
+        self.record_max_delay = 0 # may be removed
 
         # === source function ===
         # condition_record[ueid] stores the received conditions from candidates ([Sat_condition, ..., Sat_condition])
@@ -265,4 +266,5 @@ class Satellite(Base):
         condition = Sat_condition(access_delay=delay, ueid=ueid, satid=self.identity, sourceid=sourceid,
                                   ue_utility=ue_utility)
         self.access_Q.insert(ueid, delay)
+        self.record_max_delay = max(self.record_max_delay, delay)
         return condition
