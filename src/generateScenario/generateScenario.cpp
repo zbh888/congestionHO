@@ -120,15 +120,15 @@ UE generateUE(std::mt19937 &gen) {
     std::uniform_real_distribution<> dis(0, 1);
     double randomNum = dis(gen);
     if (randomNum < 0.5) {
-        std::uniform_real_distribution<> disx(-25, 25);
+        std::uniform_real_distribution<> disx(-5, 5);
         double x = disx(gen);
-        std::uniform_real_distribution<> disy(-25, 25);
+        std::uniform_real_distribution<> disy(-5, 5);
         double y = disy(gen);
         return UE(x, y);
     } else {
-        std::uniform_real_distribution<> disx(-125, -75);
+        std::uniform_real_distribution<> disx(-75, -70);
         double x = disx(gen);
-        std::uniform_real_distribution<> disy(-25, 25);
+        std::uniform_real_distribution<> disy(-5, 5);
         double y = disy(gen);
         return UE(x, y);
     }
@@ -153,7 +153,7 @@ public:
 int main() {
     int seed = 20702017;
     int N_satellites_one_trajectory = 8;
-    int N_UE = 20;
+    int N_UE = 2000;
     double T_TOTAL = 200;
     double T_UNIT = 1;
     double T_UNIT2 = 0.01;
