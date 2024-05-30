@@ -56,7 +56,7 @@ def load_scenario():
             x=UE_data['x'],
             y=UE_data['y'])
         UEs.append(ue)
-
-    C = np.load('../generateScenario/simulation_coverage_info.npy')
+    # Prevent memory loading, may slow down the program.
+    C = np.load('../generateScenario/simulation_coverage_info.npy', mmap_mode='r')
 
     return UEs, satellites, C

@@ -36,6 +36,10 @@ class Queue:
             self.Q.append(slotQ)
             self.slots_status.append(self.max_opportunity)
 
+        self.reserved_number = 0
+
+    def calulate_reservation_rate(self):
+        return self.reserved_number / (self.max_opportunity * self.max_access_slots)
     def shift(self):
         # Note this counter is not simulation time
         # simulation time = self.counter - max_access_slots
@@ -43,14 +47,17 @@ class Queue:
         slotQ = slotQueue(self.counter, self.max_opportunity)
         self.slots_status.popleft()
         self.slots_status.append(self.max_opportunity)
+        rate = self.calulate_reservation_rate()
         Q = self.Q.popleft()
+        self.reserved_number -= Q.length()
         self.Q.append(slotQ)
-        return Q
+        return Q, rate
 
     def insert(self, ueid, delay):
         self.access_issue_time_delay[ueid] = (self.counter - self.max_access_slots, delay)
         self.Q[delay - 1].insert(ueid)
         self.slots_status[delay - 1] -= 1
+        self.reserved_number += 1 # just for reservation count
 
     def available_slots(self):
         return [index for index, value in enumerate(self.slots_status) if value > 0]
@@ -61,3 +68,4 @@ class Queue:
         if slot >= 0:
             self.Q[slot].delete(ueid)
             self.slots_status[slot] += 1
+            self.reserved_number -= 1 # just for reservation count

@@ -4,12 +4,12 @@
 #S_ALG=('S_LONGEST' 'S_EARLIEST' 'S_RANDOM')
 #C_ALG=('C_EARLIEST' 'C_RANDOM')
 #U_ALG=('UE_LONGEST' 'UE_RANDOM')
-#Max_ACC=('16' '32' '64')
+#Max_ACC=('3')
 
 S_ALG=('S_LONGEST')
-C_ALG=('C_EARLIEST')
+C_ALG=('C_EARLIEST' 'C_RANDOM')
 U_ALG=('UE_LONGEST')
-Max_ACC=('4' '1')
+Max_ACC=('3')
 
 # Loop through each element in S_ALG
 for s in "${S_ALG[@]}"; do

@@ -15,7 +15,7 @@ SN_STATUS_TRANSFER = "SN_STATUS_TRANSFER"
 HANDOVER_CANCEL = "HANDOVER_CANCEL"
 
 NUMBER_CANDIDATE = 3
-WINDOW_SIZE = 100
+WINDOW_SIZE = 200
 max_access_slots = WINDOW_SIZE
 oracle_assignment = False
 oracle_simulation = False

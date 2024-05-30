@@ -16,6 +16,13 @@ class allCounters:
         self.generate_time_sat_matrix()
         self.generate_total_handover()
         self.generate_max_delay()
+        self.generate_max_reservation_rate()
+
+    def generate_max_reservation_rate(self):
+        max_reservation = []
+        for satid in self.satellites:
+            max_reservation.append(self.satellites[satid].max_reservation_rate)
+        self.result['max_reservation'] = max_reservation
 
     def generate_max_delay(self):
         max_delay = []
