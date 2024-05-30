@@ -2,7 +2,7 @@
 
 cd result
 shopt -s extglob
-rm -rf !(result.ipynb|README.md)
+rm -rf !(result.ipynb|README.md|result.py)
 cd ..
 
 read -p "Do you want to remove the zip file? (y/n): " response
