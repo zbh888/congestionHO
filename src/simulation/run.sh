@@ -7,9 +7,9 @@
 #Max_ACC=('3')
 
 S_ALG=('S_LONGEST')
-C_ALG=('C_EARLIEST' 'C_RANDOM')
+C_ALG=('C_RANDOM')
 U_ALG=('UE_LONGEST')
-Max_ACC=('3')
+Max_ACC=('4')
 
 # Loop through each element in S_ALG
 for s in "${S_ALG[@]}"; do
