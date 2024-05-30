@@ -6,6 +6,14 @@ import sys
 import seaborn as sns
 from matplotlib import colormaps
 
+LEGEND_SIZE = 6
+
+def escape_underscores(setting):
+    input_string = "-".join(setting)
+    escaped_string = input_string.replace("_", "-")
+    return escaped_string
+
+
 def highest_25_percent_mean_variance(nnumbers):
         # Sort the list in descending order
     sorted_numbers = sorted(nnumbers, reverse=True)
