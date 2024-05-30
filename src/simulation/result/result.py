@@ -123,6 +123,7 @@ def draw_total_load_each_satellite(results):
     plt.show()
 
 def draw_cumulative_load_each_time(results):
+    print("Given a signalling load, is the method showing that majority of the time slots are under the expected threshold?")
     plt.figure(figsize=(10, 6))
     cmap = colormaps.get_cmap(COLOR)
     colors = [cmap(i) for i in range(len(results))]
@@ -208,6 +209,7 @@ def draw_max_access_slot(results):
     plt.show()
 
 def draw_max_signalling(results):
+    print("Are there certain satellites experiencing higher signalling peaks than others?")
     plt.figure(figsize=(10, 6))
     cmap = colormaps.get_cmap(COLOR)
     colors = [cmap(i) for i in range(len(results))]
@@ -220,12 +222,13 @@ def draw_max_signalling(results):
         plt.plot(sorted_data, marker='', linestyle='-', linewidth=1, color=colors[idx], label=legend)
     plt.xlabel('Index')
     plt.ylabel('Signalling count')
-    plt.title('Max signalling each time slot')
+    plt.title('Max signalling each satellite')
     plt.grid(True)
     plt.legend(fontsize=LEGEND_SIZE)
     plt.show()
 
 def draw_max_reservation(results):
+    print("Are certain satellites experienced a much higher maximum reservation rate than others?")
     plt.figure(figsize=(10, 6))
     cmap = colormaps.get_cmap(COLOR)
     colors = [cmap(i) for i in range(len(results))]
@@ -243,7 +246,7 @@ def draw_max_reservation(results):
     plt.show()
 
 def draw_numerical_result(results):
-    text_size = 8
+    text_size = 6
     cmap = colormaps.get_cmap(COLOR)
     colors = [cmap(i) for i in range(len(results))]
     data = []
