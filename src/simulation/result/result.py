@@ -8,7 +8,8 @@ from matplotlib import colormaps
 from adjustText import adjust_text
 import scipy.stats as stats
 
-LEGEND_SIZE = 6
+LEGEND_SIZE = 8
+COLOR = 'tab20'
 
 def escape_underscores(setting):
     input_string = "-".join(setting)
@@ -59,11 +60,12 @@ def Non_empty_confidence_interval(nnumbers):
     return mean, margin_of_error
 
 
-def generate_numerical_results(results):
+def generate_numerical_results(results, filter_flag, filter_threshold):
     file_path = "aggregated_result.txt"
     if os.path.exists(file_path):
         os.remove(file_path)
         print(f"{file_path} has been regenerated.")
+    data = []
     for setting in results:
         source_alg = setting[0]
         candidate_alg = setting[1]
@@ -81,10 +83,30 @@ def generate_numerical_results(results):
             file.write(f"Total handover: {res['total_handover']}\n")
             file.write(f"Non-Empty time: {np.sum(time_sat_matrix_flatten != 0)}\n")
             file.write(f"Non-Empty time top 25% confidence: {mean} ± {margin_of_error}\n")
+        data.append((np.max(time_sat_matrix), setting))
+    if filter_flag:
+        new_result = {}
+        sorted_setting = sorted(data, key=lambda x: x[0])
+        print("Those with small max signalling")
+        for element in sorted_setting[:int(filter_threshold*len(sorted_setting))]:
+            setting = element[1]
+            print(setting)
+            new_result[setting] = results[setting]
+        print("Those with large max signalling")
+        for element in sorted_setting[-int(filter_threshold*len(sorted_setting)):]:
+            setting = element[1]
+            print(setting)
+            new_result[setting] = results[setting]
+        return new_result
+    else:
+        return results
+
+
 
 def draw_total_load_each_satellite(results):
+    print("Are there certain satellites handling much more signalling than others?")
     plt.figure(figsize=(10, 6))
-    cmap = colormaps.get_cmap('tab20') 
+    cmap = colormaps.get_cmap(COLOR)
     colors = [cmap(i) for i in range(len(results))]
     for idx, setting in enumerate(results):
         legend = escape_underscores(setting)
@@ -102,7 +124,7 @@ def draw_total_load_each_satellite(results):
 
 def draw_cumulative_load_each_time(results):
     plt.figure(figsize=(10, 6))
-    cmap = colormaps.get_cmap('tab20') 
+    cmap = colormaps.get_cmap(COLOR)
     colors = [cmap(i) for i in range(len(results))]
     for idx, setting in enumerate(results):
         legend = escape_underscores(setting)
@@ -122,8 +144,9 @@ def draw_cumulative_load_each_time(results):
     plt.show()
 
 def draw_busy_hour_distribution(results):
+    print("Are there certain satellites handling majority of the busy (top 25%) signalling slots? ")
     plt.figure(figsize=(10, 6))
-    cmap = colormaps.get_cmap('tab20') 
+    cmap = colormaps.get_cmap(COLOR)
     colors = [cmap(i) for i in range(len(results))]
     for idx, setting in enumerate(results):
         legend = escape_underscores(setting)
@@ -169,7 +192,7 @@ def draw_heatmap(results, interval):
 
 def draw_max_access_slot(results):
     plt.figure(figsize=(10, 6))
-    cmap = colormaps.get_cmap('tab20') 
+    cmap = colormaps.get_cmap(COLOR)
     colors = [cmap(i) for i in range(len(results))]
     for idx, setting in enumerate(results):
         legend = escape_underscores(setting)
@@ -186,7 +209,7 @@ def draw_max_access_slot(results):
 
 def draw_max_signalling(results):
     plt.figure(figsize=(10, 6))
-    cmap = colormaps.get_cmap('tab20') 
+    cmap = colormaps.get_cmap(COLOR)
     colors = [cmap(i) for i in range(len(results))]
     for idx, setting in enumerate(results):
         legend = escape_underscores(setting)
@@ -204,7 +227,7 @@ def draw_max_signalling(results):
 
 def draw_max_reservation(results):
     plt.figure(figsize=(10, 6))
-    cmap = colormaps.get_cmap('tab20') 
+    cmap = colormaps.get_cmap(COLOR)
     colors = [cmap(i) for i in range(len(results))]
     for idx, setting in enumerate(results):
         legend = escape_underscores(setting)
@@ -220,7 +243,8 @@ def draw_max_reservation(results):
     plt.show()
 
 def draw_numerical_result(results):
-    cmap = colormaps.get_cmap('tab20')
+    text_size = 8
+    cmap = colormaps.get_cmap(COLOR)
     colors = [cmap(i) for i in range(len(results))]
     data = []
     for idx, setting in enumerate(results):
@@ -231,7 +255,8 @@ def draw_numerical_result(results):
         total_signalling = np.sum(time_sat_matrix)
         time_sat_matrix_flatten = time_sat_matrix.flatten()
         x = time_sat_matrix_flatten[time_sat_matrix_flatten != 0]
-        mean, margin = Non_empty_confidence_interval(x)
+        #mean, margin = Non_empty_confidence_interval(x)
+        mean, margin, cutoff = highest_25_percent_confidence_interval(x)
         data.append((maximum_signalling, legend, colors[idx], total_signalling, mean, margin))
     sorted_data_triples = sorted(data, key=lambda x: x[0])
     sorted_data, sorted_labels, sorted_colors, sorted_totalsignalling, sorted_mean, sorted_margin = zip(*sorted_data_triples)
@@ -241,7 +266,7 @@ def draw_numerical_result(results):
     plt.plot(sorted_data, marker='o', linestyle='-')
     texts = []
     for i, (label, color) in enumerate(zip(sorted_labels, sorted_colors)):
-        texts.append(plt.text(i, sorted_data[i], label, fontsize=5, ha='right', va='bottom', color=color))
+        texts.append(plt.text(i, sorted_data[i], label, fontsize=text_size, fontweight='bold', ha='right', va='bottom', color=color))
     adjust_text(texts)
     plt.title('Sorted maximum signalling')
     plt.xlabel('Index')
@@ -252,27 +277,29 @@ def draw_numerical_result(results):
 
     # Use sorted_data_triples to plot other side effects following the same order
     # The purpose is to learn the trade-off
+    print("Overall, are we generating more signalling?")
     plt.figure(figsize=(12, 6))
     plt.plot(sorted_totalsignalling, marker='o', linestyle='-')
     texts = []
     for i, (label, color) in enumerate(zip(sorted_labels, sorted_colors)):
-        texts.append(plt.text(i, sorted_totalsignalling[i], label, fontsize=5, ha='right', va='bottom', color=color))
+        texts.append(plt.text(i, sorted_totalsignalling[i], label, fontsize=text_size, fontweight='bold', ha='right', va='bottom', color=color))
     adjust_text(texts)
-    plt.title('Total signalling following previous order')
+    plt.title('Total signalling following main objective order')
     plt.xlabel('Index')
     plt.ylabel('Value')
     plt.grid(True)
     plt.show()
 
+    print("During busy time (top 25%), are we making the busy time more busy?")
     plt.figure(figsize=(12, 6))
     plt.plot(sorted_mean, marker='o', linestyle='-')
     plt.errorbar(range(len(sorted_mean)), sorted_mean, yerr=sorted_margin, fmt='o', ecolor='r', capsize=5)
     texts = []
     for i, (label, color) in enumerate(zip(sorted_labels, sorted_colors)):
-        texts.append(plt.text(i, sorted_mean[i], label, fontsize=5, ha='right', va='bottom', color=color))
+        texts.append(plt.text(i, sorted_mean[i], label, fontsize=text_size, fontweight='bold', ha='right', va='bottom', color=color))
     adjust_text(texts)
     plt.xlabel('Index')
     plt.ylabel('Mean Value')
-    plt.title('Mean with Confidence Intervals')
+    plt.title('Mean with confidence Intervals')
     plt.grid(True)
 
