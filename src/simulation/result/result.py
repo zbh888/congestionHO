@@ -5,6 +5,8 @@ import os
 import sys
 import seaborn as sns
 from matplotlib import colormaps
+from adjustText import adjust_text
+import scipy.stats as stats
 
 LEGEND_SIZE = 6
 
@@ -14,7 +16,27 @@ def escape_underscores(setting):
     return escaped_string
 
 
-def highest_25_percent_mean_variance(nnumbers):
+def calculate_confidence_interval(data, confidence=0.95):
+    """
+    Calculate the confidence interval for the mean of the given data.
+
+    Parameters:
+    data (list or numpy array): List of numbers.
+    confidence (float): Confidence level, default is 0.95.
+
+    Returns:
+    tuple: (mean, lower bound of confidence interval, upper bound of confidence interval)
+    """
+    data = np.array(data)
+    n = len(data)
+    mean = np.mean(data)
+    sem = stats.sem(data)  # Standard error of the mean
+    margin_of_error = sem * stats.t.ppf((1 + confidence) / 2., n - 1)
+
+    return mean, margin_of_error
+
+
+def highest_25_percent_confidence_interval(nnumbers):
         # Sort the list in descending order
     sorted_numbers = sorted(nnumbers, reverse=True)
 
@@ -25,12 +47,23 @@ def highest_25_percent_mean_variance(nnumbers):
     top_25_percent = sorted_numbers[:cutoff_index]
 
         # Calculate the mean and variance
-    mean_top_25 = np.mean(top_25_percent)
-    variance_top_25 = np.var(top_25_percent)
+    mean, margin_of_error = calculate_confidence_interval(top_25_percent, 0.95)
 
-    return mean_top_25, variance_top_25, top_25_percent[-1]
+    return mean, margin_of_error, top_25_percent[-1]
+
+def Non_empty_confidence_interval(nnumbers):
+
+    # Calculate the mean and variance
+    mean, margin_of_error = calculate_confidence_interval(nnumbers, 0.95)
+
+    return mean, margin_of_error
+
 
 def generate_numerical_results(results):
+    file_path = "aggregated_result.txt"
+    if os.path.exists(file_path):
+        os.remove(file_path)
+        print(f"{file_path} has been regenerated.")
     for setting in results:
         source_alg = setting[0]
         candidate_alg = setting[1]
@@ -39,15 +72,15 @@ def generate_numerical_results(results):
         time_sat_matrix = res['time_sat_matrix']
         time_sat_matrix_flatten = time_sat_matrix.flatten()
         x = time_sat_matrix_flatten[time_sat_matrix_flatten != 0]
-        mean, var, cutoff = highest_25_percent_mean_variance(x)
+        mean, margin_of_error, cutoff = highest_25_percent_confidence_interval(x)
         results[setting]['cutoff'] = cutoff
         with open("aggregated_result.txt", "a") as file:
             file.write(f"===== {source_alg} {candidate_alg} {ue_alg} =====\n")
+            file.write(f"Maximum signalling: {np.max(time_sat_matrix)}\n")
             file.write(f"Total signalling: {np.sum(time_sat_matrix)}\n")
             file.write(f"Total handover: {res['total_handover']}\n")
             file.write(f"Non-Empty time: {np.sum(time_sat_matrix_flatten != 0)}\n")
-            file.write(f"Non-Empty time top 25% mean: {mean}\n")
-            file.write(f"Non-Empty time top 25% variance: {var}\n")
+            file.write(f"Non-Empty time top 25% confidence: {mean} ± {margin_of_error}\n")
 
 def draw_total_load_each_satellite(results):
     plt.figure(figsize=(10, 6))
@@ -185,4 +218,61 @@ def draw_max_reservation(results):
     plt.grid(True)
     plt.legend(fontsize=LEGEND_SIZE)
     plt.show()
-        
+
+def draw_numerical_result(results):
+    cmap = colormaps.get_cmap('tab20')
+    colors = [cmap(i) for i in range(len(results))]
+    data = []
+    for idx, setting in enumerate(results):
+        legend = escape_underscores(setting)
+        res = results[setting]
+        time_sat_matrix = res['time_sat_matrix']
+        maximum_signalling = np.max(time_sat_matrix)
+        total_signalling = np.sum(time_sat_matrix)
+        time_sat_matrix_flatten = time_sat_matrix.flatten()
+        x = time_sat_matrix_flatten[time_sat_matrix_flatten != 0]
+        mean, margin = Non_empty_confidence_interval(x)
+        data.append((maximum_signalling, legend, colors[idx], total_signalling, mean, margin))
+    sorted_data_triples = sorted(data, key=lambda x: x[0])
+    sorted_data, sorted_labels, sorted_colors, sorted_totalsignalling, sorted_mean, sorted_margin = zip(*sorted_data_triples)
+
+    # Plotting
+    plt.figure(figsize=(12, 6))
+    plt.plot(sorted_data, marker='o', linestyle='-')
+    texts = []
+    for i, (label, color) in enumerate(zip(sorted_labels, sorted_colors)):
+        texts.append(plt.text(i, sorted_data[i], label, fontsize=5, ha='right', va='bottom', color=color))
+    adjust_text(texts)
+    plt.title('Sorted maximum signalling')
+    plt.xlabel('Index')
+    plt.ylabel('Value')
+    plt.grid(True)
+    plt.show()
+
+
+    # Use sorted_data_triples to plot other side effects following the same order
+    # The purpose is to learn the trade-off
+    plt.figure(figsize=(12, 6))
+    plt.plot(sorted_totalsignalling, marker='o', linestyle='-')
+    texts = []
+    for i, (label, color) in enumerate(zip(sorted_labels, sorted_colors)):
+        texts.append(plt.text(i, sorted_totalsignalling[i], label, fontsize=5, ha='right', va='bottom', color=color))
+    adjust_text(texts)
+    plt.title('Total signalling following previous order')
+    plt.xlabel('Index')
+    plt.ylabel('Value')
+    plt.grid(True)
+    plt.show()
+
+    plt.figure(figsize=(12, 6))
+    plt.plot(sorted_mean, marker='o', linestyle='-')
+    plt.errorbar(range(len(sorted_mean)), sorted_mean, yerr=sorted_margin, fmt='o', ecolor='r', capsize=5)
+    texts = []
+    for i, (label, color) in enumerate(zip(sorted_labels, sorted_colors)):
+        texts.append(plt.text(i, sorted_mean[i], label, fontsize=5, ha='right', va='bottom', color=color))
+    adjust_text(texts)
+    plt.xlabel('Index')
+    plt.ylabel('Mean Value')
+    plt.title('Mean with Confidence Intervals')
+    plt.grid(True)
+
