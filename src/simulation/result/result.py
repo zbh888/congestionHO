@@ -17,6 +17,20 @@ def escape_underscores(setting):
     return escaped_string
 
 
+def coefficient_of_variation(data):
+    if len(data) == 0:
+        raise ValueError("The data list is empty.")
+
+    mean = np.mean(data)
+    std_dev = np.std(data)
+
+    if mean == 0:
+        raise ValueError("The mean of the data is zero, cannot compute coefficient of variation.")
+
+    cv = std_dev / mean
+    return cv
+
+
 def calculate_confidence_interval(data, confidence=0.95):
     """
     Calculate the confidence interval for the mean of the given data.
@@ -60,46 +74,95 @@ def Non_empty_confidence_interval(nnumbers):
     return mean, margin_of_error
 
 
-def generate_numerical_results(results, filter_flag, filter_threshold):
+def prepare_result(results, filter_flag, filter_threshold):
+    busy_percent = 0.2
+    stat_result = {}
     file_path = "aggregated_result.txt"
-    if os.path.exists(file_path):
-        os.remove(file_path)
-        print(f"{file_path} has been regenerated.")
+    with open(file_path, "w") as file:
+        file.write("S_ALG,C_ALG,UE_ALG,ACC_OPPORTUNITIES,MAX_SIGNALLING,TOTAL_SIGNALLING,BUSY_CV,MEAN,MARGIN\n")
     data = []
     for setting in results:
-        source_alg = setting[0]
-        candidate_alg = setting[1]
-        ue_alg = setting[2]
+        stat_result[setting] = {}
         res = results[setting]
-        time_sat_matrix = res['time_sat_matrix']
-        time_sat_matrix_flatten = time_sat_matrix.flatten()
-        x = time_sat_matrix_flatten[time_sat_matrix_flatten != 0]
-        mean, margin_of_error, cutoff = highest_25_percent_confidence_interval(x)
-        results[setting]['cutoff'] = cutoff
-        with open("aggregated_result.txt", "a") as file:
-            file.write(f"===== {source_alg} {candidate_alg} {ue_alg} =====\n")
-            file.write(f"Maximum signalling: {np.max(time_sat_matrix)}\n")
-            file.write(f"Total signalling: {np.sum(time_sat_matrix)}\n")
-            file.write(f"Total handover: {res['total_handover']}\n")
-            file.write(f"Non-Empty time: {np.sum(time_sat_matrix_flatten != 0)}\n")
-            file.write(f"Non-Empty time top 25% confidence: {mean} ± {margin_of_error}\n")
-        data.append((np.max(time_sat_matrix), setting))
+        maximum_signalling = main_objective_compute_max_signalling(res)
+        total_signalling = side_effect_compute_total_siganlling(res)
+        busy_time_balance_cv = side_effect_compute_busy_time_balance_cv(res, busy_percent)
+        mean, margin = side_effect_compute_busy_time_confidence(res, busy_percent)
+
+        stat_result[setting]['maximum_signalling'] = maximum_signalling
+        data.append((maximum_signalling, setting))
+        stat_result[setting]['total_signalling'] = total_signalling
+        stat_result[setting]['busy_time_balance_cv'] = busy_time_balance_cv
+        stat_result[setting]['mean'] = mean
+        stat_result[setting]['margin'] = margin
+        with open(file_path, "a") as file:
+            file.write(f"{setting[0]},")
+            file.write(f"{setting[1]},")
+            file.write(f"{setting[2]},")
+            file.write(f"{setting[3]},")
+            file.write(f"{maximum_signalling},")
+            file.write(f"{total_signalling},")
+            file.write(f"{busy_time_balance_cv},")
+            file.write(f"{mean},")
+            file.write(f"{margin}\n")
     if filter_flag:
         new_result = {}
         sorted_setting = sorted(data, key=lambda x: x[0])
         print("Those with small max signalling")
-        for element in sorted_setting[:int(filter_threshold*len(sorted_setting))]:
+        for element in sorted_setting[:int(filter_threshold * len(sorted_setting))]:
             setting = element[1]
             print(setting)
-            new_result[setting] = results[setting]
+            new_result[setting] = stat_result[setting]
         print("Those with large max signalling")
-        for element in sorted_setting[-int(filter_threshold*len(sorted_setting)):]:
+        for element in sorted_setting[-int(filter_threshold * len(sorted_setting)):]:
             setting = element[1]
             print(setting)
-            new_result[setting] = results[setting]
+            new_result[setting] = stat_result[setting]
         return new_result
     else:
-        return results
+        return stat_result
+
+
+# def generate_numerical_results(results, filter_flag, filter_threshold):
+#     file_path = "aggregated_result.txt"
+#     if os.path.exists(file_path):
+#         os.remove(file_path)
+#         print(f"{file_path} has been regenerated.")
+#     data = []
+#     for setting in results:
+#         source_alg = setting[0]
+#         candidate_alg = setting[1]
+#         ue_alg = setting[2]
+#         res = results[setting]
+#         time_sat_matrix = res['time_sat_matrix']
+#         time_sat_matrix_flatten = time_sat_matrix.flatten()
+#         x = time_sat_matrix_flatten[time_sat_matrix_flatten != 0]
+#         mean, margin_of_error, cutoff = highest_25_percent_confidence_interval(x)
+#         results[setting]['cutoff'] = cutoff
+#         with open("aggregated_result.txt", "a") as file:
+#             file.write(f"===== {source_alg} {candidate_alg} {ue_alg} =====\n")
+#             file.write(f"Maximum signalling: {np.max(time_sat_matrix)}\n")
+#             file.write(f"Total signalling: {np.sum(time_sat_matrix)}\n")
+#             file.write(f"Total handover: {res['total_handover']}\n")
+#             file.write(f"Non-Empty time: {np.sum(time_sat_matrix_flatten != 0)}\n")
+#             file.write(f"Non-Empty time top 25% confidence: {mean} ± {margin_of_error}\n")
+#         data.append((np.max(time_sat_matrix), setting))
+#     if filter_flag:
+#         new_result = {}
+#         sorted_setting = sorted(data, key=lambda x: x[0])
+#         print("Those with small max signalling")
+#         for element in sorted_setting[:int(filter_threshold*len(sorted_setting))]:
+#             setting = element[1]
+#             print(setting)
+#             new_result[setting] = results[setting]
+#         print("Those with large max signalling")
+#         for element in sorted_setting[-int(filter_threshold*len(sorted_setting)):]:
+#             setting = element[1]
+#             print(setting)
+#             new_result[setting] = results[setting]
+#         return new_result
+#     else:
+#         return results
 
 
 
@@ -245,7 +308,41 @@ def draw_max_reservation(results):
     plt.legend(fontsize=LEGEND_SIZE)
     plt.show()
 
-def draw_numerical_result(results):
+def main_objective_compute_max_signalling(result):
+    time_sat_matrix = result['time_sat_matrix']
+    maximum_signalling = np.max(time_sat_matrix)
+    return maximum_signalling
+
+def side_effect_compute_total_siganlling(result):
+    time_sat_matrix = result['time_sat_matrix']
+    total_signalling = np.sum(time_sat_matrix)
+    return total_signalling
+
+def side_effect_compute_busy_time_balance_cv(result, cutoff_percent):
+    time_sat_matrix = result['time_sat_matrix']
+    time_sat_matrix_flatten = time_sat_matrix.flatten()
+    x = time_sat_matrix_flatten[time_sat_matrix_flatten != 0]
+    sorted_numbers = sorted(x, reverse=True)
+    cutoff_index = int(len(sorted_numbers) * cutoff_percent)
+    cutoff = sorted_numbers[:cutoff_index][-1]
+    mask = time_sat_matrix >= cutoff
+    count_greater_than_cutoff = np.sum(mask, axis=1)
+    count_greater_than_cutoff_percent = count_greater_than_cutoff / np.sum(count_greater_than_cutoff)
+    sorted_data = np.sort(count_greater_than_cutoff_percent)[len(count_greater_than_cutoff_percent)//2:]
+    cv = coefficient_of_variation(sorted_data)
+    return cv
+
+def side_effect_compute_busy_time_confidence(result, cutoff_percent):
+    time_sat_matrix = result['time_sat_matrix']
+    time_sat_matrix_flatten = time_sat_matrix.flatten()
+    x = time_sat_matrix_flatten[time_sat_matrix_flatten != 0]
+    sorted_numbers = sorted(x, reverse=True)
+    cutoff_index = int(len(sorted_numbers) * cutoff_percent)
+    busy_time_signalling_count = sorted_numbers[:cutoff_index]
+    mean, margin_of_error = calculate_confidence_interval(busy_time_signalling_count, 0.95)
+    return mean, margin_of_error
+
+def draw_result(results):
     text_size = 6
     cmap = colormaps.get_cmap(COLOR)
     colors = [cmap(i) for i in range(len(results))]
