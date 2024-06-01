@@ -42,7 +42,7 @@ class Satellite(Base):
         self.current_assigned_slot = None
         self.oracle = oracle
         self.record_max_delay = 0 # may be removed, recording the largest delay returned, not apply to RANDOM
-        self.max_reservation_rate = 0 # may be removed, apply yo RANDOM
+        self.reservation_count = 0
 
         # === source function ===
         # condition_record[ueid] stores the received conditions from candidates ([Sat_condition, ..., Sat_condition])
@@ -65,8 +65,8 @@ class Satellite(Base):
     def action_monitor(self):
         while True:
             yield self.env.timeout(0.999999)
-            self.current_assigned_slot, reservation_rate = self.access_Q.shift()
-            self.max_reservation_rate = max(self.max_reservation_rate, reservation_rate)
+            self.current_assigned_slot, reservation_count = self.access_Q.shift()
+            self.reservation_count += reservation_count
 
     def handle_messages(self):
         while True:
