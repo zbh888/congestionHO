@@ -66,6 +66,7 @@ class Satellite(Base):
 
     # ====== Satellite functions ======
     def prepare_my_load_prediction(self):
+        # TODO the timing may be inaccurate
         return self.predicted_my_load[self.env.now:self.env.now+self.access_Q.max_access_slots]
 
     def action_monitor(self):
@@ -82,7 +83,8 @@ class Satellite(Base):
             now = self.env.now
             task = data['task']
             if task not in [MEASUREMENT_REPORT, RANDOM_ACCESS, RRC_RECONFIGURATION_COMPLETE]:
-                assert('load' in data)
+                self.load_aware[data['from']] = (self.env.now, data['load'])
+                print(self.load_aware[data['from']])
             self.counter.increment(task, now)
             # ================================================ Source
             if task == MEASUREMENT_REPORT:
