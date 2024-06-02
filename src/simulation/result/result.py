@@ -278,10 +278,10 @@ def prepare_result(results, filter_flag, filter_threshold):
             file.write(f"{total_signalling},")
             file.write(f"{busy_time_balance_cv},")
             file.write(f"{mean},")
-            file.write(f"{margin}")
-            file.write(f"{total_reservation}")
-            file.write(f"{reservation_balance_cv}\n")
-            file.write(f"{delay_mean}\n")
+            file.write(f"{margin},")
+            file.write(f"{total_reservation},")
+            file.write(f"{reservation_balance_cv},")
+            file.write(f"{delay_mean},")
             file.write(f"{delay_cv}\n")
     if filter_flag:
         new_result = {}
