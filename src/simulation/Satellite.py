@@ -50,6 +50,9 @@ class Satellite(Base):
         # candidates_record[ueid] stores candidates
         self.candidates_record = {}
 
+        self.load_aware = {}
+        self.predicted_my_load = [0] * (self.DURATION + 1000)
+
         # === target function ===
         # takeover_condition_record[ueid] stores 
         self.takeover_condition_record = {}
@@ -62,6 +65,9 @@ class Satellite(Base):
         self.env.process(self.handle_messages())
 
     # ====== Satellite functions ======
+    def prepare_my_load_prediction(self):
+        return self.predicted_my_load[self.env.now:self.env.now+self.access_Q.max_access_slots]
+
     def action_monitor(self):
         while True:
             yield self.env.timeout(0.999999)
@@ -108,6 +114,7 @@ class Satellite(Base):
                     "task": HANDOVER_RESPONSE,
                     "ueid": ueid,
                     "condition": condition.toJSON(),
+                    "load" : self.prepare_my_load_prediction()
                 }
                 self.send_message(
                     msg=data,

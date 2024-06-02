@@ -149,7 +149,7 @@ class UE(Base):
                 if UE_ALG == UE_ALG_LONGEST:
                     selected_candidates = [x[0] for x in sorted_list][:NUMBER_CANDIDATE]
                 # random
-                if UE_ALG == UE_ALG_RANDOM:
+                elif UE_ALG == UE_ALG_RANDOM:
                     selected_candidates = random.sample(candidates.tolist(), NUMBER_CANDIDATE)
                 else:
                     print(UE_ALG)

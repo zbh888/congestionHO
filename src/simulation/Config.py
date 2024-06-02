@@ -33,6 +33,7 @@ UE_ALG_LONGEST = "UE_LONGEST"
 UE_ALG_RANDOM = "UE_RANDOM"
 
 # Modify this list if you have anything to compare
+sys.argv = ['notebook', SOURCE_ALG_LONGEST, CANDIDATE_ALG_RANDOM, UE_ALG_LONGEST, '4'] # NOTE THIS WORK IN NOTEBOOK
 SOURCE_ALG = sys.argv[1]
 CANDIDATE_ALG = sys.argv[2]
 UE_ALG = sys.argv[3]

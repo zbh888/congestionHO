@@ -43,5 +43,6 @@ class Base:
         msg['from'] = self.identity
         msg['to'] = to.identity
         msg = json.dumps(msg)
-        print(f"[{self.env.now}] {self.type} {self.identity} sends {to.type} {to.identity} the message {msg}")
         to.messageQ.put(msg)
+        # disable log by disable the below line
+        #print(f"[{self.env.now}] {self.type} {self.identity} sends {to.type} {to.identity} the message {msg}")

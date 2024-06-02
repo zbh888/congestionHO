@@ -110,6 +110,5 @@ if __name__ == "__main__":
     print('============= Experiment Log =============')
     env.run(until=DURATION)
     print('============= Experiment Ends =============')
-    print(UE_ALG)
     counter = allCounters(Satellites, UEs)
     counter.give_result()
