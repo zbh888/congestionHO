@@ -17,6 +17,14 @@ class allCounters:
         self.generate_total_handover()
         self.generate_max_delay()
         self.generate_reservation_count()
+        self.generate_access_record()
+
+    def generate_access_record(self):
+        data = []
+        for ueid in self.UEs:
+            ue = self.UEs[ueid]
+            data.append(ue.applied_delay_history)
+        self.result['ue_delay_history'] = data
 
     def generate_reservation_count(self):
         reservation_count = []
