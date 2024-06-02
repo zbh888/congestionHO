@@ -49,9 +49,10 @@ class Queue:
         self.slots_status.append(self.max_opportunity)
       #  rate = self.calulate_reservation_rate()
         Q = self.Q.popleft()
+        temp = self.reserved_number
         self.reserved_number -= Q.length()
         self.Q.append(slotQ)
-        return Q, self.reserved_number
+        return Q, temp
 
     def insert(self, ueid, delay):
         self.access_issue_time_delay[ueid] = (self.counter - self.max_access_slots, delay)
