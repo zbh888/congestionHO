@@ -81,6 +81,8 @@ class Satellite(Base):
             assert (data['to'] == self.identity)
             now = self.env.now
             task = data['task']
+            if task not in [MEASUREMENT_REPORT, RANDOM_ACCESS, RRC_RECONFIGURATION_COMPLETE]:
+                assert('load' in data)
             self.counter.increment(task, now)
             # ================================================ Source
             if task == MEASUREMENT_REPORT:
@@ -97,6 +99,7 @@ class Satellite(Base):
                         "ueid": ueid,
                         "candidates": candidates,
                         "utility": data['utility'],
+                        "load": self.prepare_my_load_prediction(),
                     }
                     self.send_message(
                         msg=data,
@@ -160,7 +163,8 @@ class Satellite(Base):
                 source = self.satellites[sourceid]
                 data = {
                     "task": HANDOVER_SUCCESS,
-                    "ueid": ueid
+                    "ueid": ueid,
+                    "load": self.prepare_my_load_prediction()
                 }
                 self.send_message(
                     msg=data,
@@ -176,7 +180,8 @@ class Satellite(Base):
                 ueid = data['ueid']
                 data = {
                     "task": SN_STATUS_TRANSFER,
-                    "ueid": ueid
+                    "ueid": ueid,
+                    "load": self.prepare_my_load_prediction()
                 }
                 self.send_message(
                     msg=data,
@@ -189,7 +194,8 @@ class Satellite(Base):
                         candidate = self.satellites[candidateid]
                         data = {
                             "task": HANDOVER_CANCEL,
-                            "ueid": ueid
+                            "ueid": ueid,
+                            "load": self.prepare_my_load_prediction()
                         }
                         self.send_message(
                             msg=data,
