@@ -309,7 +309,6 @@ def draw_prepared_result(results):
         res = results[setting]
         order_setting.append((res['maximum_signalling'], setting))
     sorted_objective_setting = sorted(order_setting, key=lambda x: x[0])
-    print(sorted_objective_setting)
     sorted_labels = []
     sorted_colors = []
     for index, element in enumerate(sorted_objective_setting):
