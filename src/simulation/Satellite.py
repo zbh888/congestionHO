@@ -50,7 +50,7 @@ class Satellite(Base):
         # candidates_record[ueid] stores candidates
         self.candidates_record = {}
 
-        self.load_aware = {}
+        self.load_aware = {} # satid -> (time, (priority, load))
         self.predicted_my_load = [0] * (self.DURATION + 1000)
         self.within_one_slot_load_priority = 0
 
@@ -71,13 +71,27 @@ class Satellite(Base):
 
     def prepare_other_load_prediction(self, satid):
         if satid not in self.load_aware:
-            return []
+            return (0, [])
         else:
             candidate_time = self.load_aware[satid][0]
             candidate_priority = self.load_aware[satid][1][0]
             candidate_load = self.load_aware[satid][1][self.env.now - candidate_time:]
             return (candidate_priority, candidate_load)
 
+    def update_other_priority_load(self, satid, priority_load):
+        if satid not in self.load_aware:
+            self.load_aware[satid] = (self.env.now, priority_load)
+        else:
+            old_priority_load = self.prepare_other_load_prediction(satid)
+            old_priority = old_priority_load[0]
+            old_load_length = len(old_priority_load[1])
+            new_priority = priority_load[0]
+            new_load_length = len(priority_load[1])
+            if new_load_length == old_load_length:
+                if new_priority > old_priority:
+                    self.load_aware[satid] = (self.env.now, priority_load)
+            elif new_load_length > old_load_length:
+                self.load_aware[satid] = (self.env.now, priority_load)
 
     def action_monitor(self):
         while True:
@@ -111,7 +125,7 @@ class Satellite(Base):
                         "candidates": candidates,
                         "utility": data['utility'],
                         "priority_load": self.prepare_my_load_prediction(),
-                        "candidates_load": [self.prepare_other_load_prediction(c_satid) for c_satid in candidates]
+                        "candidates_priority_load": [self.prepare_other_load_prediction(c_satid) for c_satid in candidates]
                     }
                     self.send_message(
                         msg=data,
@@ -124,7 +138,9 @@ class Satellite(Base):
                 ueid = data['ueid']
                 candidates = data['candidates']
                 utilities = data['utility']
-                candidates_loads = data['candidates_load']
+                candidates_priority_loads = data['candidates_priority_load']
+                for candidate_id, candidate_priority_load in zip(candidates, candidates_priority_loads):
+                    self.update_other_priority_load(candidate_id, candidate_priority_load)
                 condition = self.prepare_condition(ueid, source_id, candidates, utilities)
                 data = {
                     "task": HANDOVER_RESPONSE,
