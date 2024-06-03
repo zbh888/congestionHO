@@ -1,15 +1,15 @@
 #!/bin/bash
 
 # Define the arrays
-S_ALG=('S_LONGEST' 'S_EARLIEST' 'S_RANDOM')
-C_ALG=('C_EARLIEST' 'C_RANDOM')
-U_ALG=('UE_LONGEST' 'UE_RANDOM')
-Max_ACC=('4' '8' '12')
+#S_ALG=('S_LONGEST' 'S_EARLIEST' 'S_RANDOM')
+#C_ALG=('C_EARLIEST' 'C_RANDOM')
+#U_ALG=('UE_LONGEST' 'UE_RANDOM')
+#Max_ACC=('4' '8' '12')
 
-#S_ALG=('S_LONGEST')
-#C_ALG=('C_RANDOM')
-#U_ALG=('UE_LONGEST')
-#Max_ACC=('8' '12')
+S_ALG=('S_LONGEST')
+C_ALG=('C_EARLIEST')
+U_ALG=('UE_LONGEST')
+Max_ACC=('8')
 
 # Loop through each element in S_ALG
 for s in "${S_ALG[@]}"; do
