@@ -52,6 +52,7 @@ class Satellite(Base):
 
         self.load_aware = {}
         self.predicted_my_load = [0] * (self.DURATION + 1000)
+        self.within_one_slot_load_priority = 0
 
         # === target function ===
         # takeover_condition_record[ueid] stores 
@@ -66,8 +67,17 @@ class Satellite(Base):
 
     # ====== Satellite functions ======
     def prepare_my_load_prediction(self):
-        # TODO the timing may be inaccurate
-        return self.predicted_my_load[self.env.now:self.env.now+self.access_Q.max_access_slots]
+        return (self.within_one_slot_load_priority, self.predicted_my_load[self.env.now:self.env.now+self.access_Q.max_access_slots])
+
+    def prepare_other_load_prediction(self, satid):
+        if satid not in self.load_aware:
+            return []
+        else:
+            candidate_time = self.load_aware[satid][0]
+            candidate_priority = self.load_aware[satid][1][0]
+            candidate_load = self.load_aware[satid][1][self.env.now - candidate_time:]
+            return (candidate_priority, candidate_load)
+
 
     def action_monitor(self):
         while True:
@@ -83,8 +93,7 @@ class Satellite(Base):
             now = self.env.now
             task = data['task']
             if task not in [MEASUREMENT_REPORT, RANDOM_ACCESS, RRC_RECONFIGURATION_COMPLETE]:
-                self.load_aware[data['from']] = (self.env.now, data['load'])
-                print(self.load_aware[data['from']])
+                self.load_aware[data['from']] = (self.env.now, data['priority_load'])
             self.counter.increment(task, now)
             # ================================================ Source
             if task == MEASUREMENT_REPORT:
@@ -101,7 +110,8 @@ class Satellite(Base):
                         "ueid": ueid,
                         "candidates": candidates,
                         "utility": data['utility'],
-                        "load": self.prepare_my_load_prediction(),
+                        "priority_load": self.prepare_my_load_prediction(),
+                        "candidates_load": [self.prepare_other_load_prediction(c_satid) for c_satid in candidates]
                     }
                     self.send_message(
                         msg=data,
@@ -114,12 +124,13 @@ class Satellite(Base):
                 ueid = data['ueid']
                 candidates = data['candidates']
                 utilities = data['utility']
+                candidates_loads = data['candidates_load']
                 condition = self.prepare_condition(ueid, source_id, candidates, utilities)
                 data = {
                     "task": HANDOVER_RESPONSE,
                     "ueid": ueid,
                     "condition": condition.toJSON(),
-                    "load" : self.prepare_my_load_prediction()
+                    'priority_load' : self.prepare_my_load_prediction()
                 }
                 self.send_message(
                     msg=data,
@@ -166,7 +177,7 @@ class Satellite(Base):
                 data = {
                     "task": HANDOVER_SUCCESS,
                     "ueid": ueid,
-                    "load": self.prepare_my_load_prediction()
+                    'priority_load': self.prepare_my_load_prediction()
                 }
                 self.send_message(
                     msg=data,
@@ -183,7 +194,7 @@ class Satellite(Base):
                 data = {
                     "task": SN_STATUS_TRANSFER,
                     "ueid": ueid,
-                    "load": self.prepare_my_load_prediction()
+                    'priority_load': self.prepare_my_load_prediction()
                 }
                 self.send_message(
                     msg=data,
@@ -197,7 +208,7 @@ class Satellite(Base):
                         data = {
                             "task": HANDOVER_CANCEL,
                             "ueid": ueid,
-                            "load": self.prepare_my_load_prediction()
+                            'priority_load': self.prepare_my_load_prediction()
                         }
                         self.send_message(
                             msg=data,
