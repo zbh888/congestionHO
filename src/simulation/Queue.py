@@ -64,9 +64,14 @@ class Queue:
         return [index for index, value in enumerate(self.slots_status) if value > 0]
 
     def release_resource(self, ueid):
-        expected_time = self.access_issue_time_delay[ueid][0] + self.access_issue_time_delay[ueid][1]
+        expected_time = self.return_expected_access_time(ueid)
         slot = expected_time - self.counter + self.max_access_slots - 1
         if slot >= 0:
             self.Q[slot].delete(ueid)
             self.slots_status[slot] += 1
             self.reserved_number -= 1 # just for reservation count
+
+    def return_expected_access_time(self, ueid):
+        return self.access_issue_time_delay[ueid][0] + self.access_issue_time_delay[ueid][1]
+
+

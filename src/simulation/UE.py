@@ -38,6 +38,8 @@ class UE(Base):
 
         # Running Process
         env.process(self.init())
+        if self.identity == 1:
+            assert(True)
         self.env.process(self.action_monitor())
         self.env.process(self.handle_messages())
 
@@ -73,9 +75,12 @@ class UE(Base):
             # ================================================
             if self.state == RRC_CONFIGURED:
                 if self.determine_if_access():
-                    target = self.satellites[self.condition.targetid]
+                    targetid = self.condition.targetid
+                    serving_length = self.estimate_serving_length(targetid)
+                    target = self.satellites[targetid]
                     data = {
                         "task": RANDOM_ACCESS,
+                        "serving_length": serving_length,
                     }
                     self.send_message(
                         msg=data,
@@ -161,6 +166,6 @@ class UE(Base):
         # The returned value means from the current time + {return}, it will perform handover.
         x, = np.where(self.coverage_info[self.identity, satid, self.env.now:] == 0)
         if len(x) == 0:
-            return 1e7
+            return 4000 # So, it goes to the end of the simulation
         else:
             return int(x[0] - 1)

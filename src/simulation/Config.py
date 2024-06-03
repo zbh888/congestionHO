@@ -39,3 +39,7 @@ CANDIDATE_ALG = sys.argv[2]
 UE_ALG = sys.argv[3]
 max_access_opportunity = int(sys.argv[4])
 RESULT_PATH = "./result/" + SOURCE_ALG + '|' + CANDIDATE_ALG + '|' + UE_ALG + '|' + str(max_access_opportunity) + '.pkl'
+
+UE_HANDOVER_SIGNALLING_COUNT_ON_SOURCE = 5
+TARGET_HANDOVER_SUCCESS_SIGNALLING_COUNT_ON_SOURCE = 1
+SOURCE_HANDOVER_REQUEST_SIGNALLING_COUNT_ON_CANDIDATE = 2 # Assuming candidate will be target.
