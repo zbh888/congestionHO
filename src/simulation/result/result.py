@@ -309,28 +309,29 @@ def draw_prepared_result(results):
         res = results[setting]
         order_setting.append((res['maximum_signalling'], setting))
     sorted_objective_setting = sorted(order_setting, key=lambda x: x[0])
-    sorted_labels = []
+    sorted_settings = []
     sorted_colors = []
     for index, element in enumerate(sorted_objective_setting):
         setting = element[1]
-        sorted_labels.append(escape_underscores(setting))
+        sorted_settings.append(setting)
         sorted_colors.append(colors[index])
+    sorted_labels = np.array([chr(i) for i in range(ord('A'), ord('Z') + 1)])
 
     # Plotting the main objective
     sorted_data = []
     for element in sorted_objective_setting:
         res = results[element[1]]
         sorted_data.append(res['maximum_signalling'])
-    plt.figure(figsize=(12, 6))
-    plt.plot(sorted_data, marker='o', linestyle='-')
-    texts = []
-    for i, (label, color) in enumerate(zip(sorted_labels, sorted_colors)):
-        texts.append(plt.text(i, sorted_data[i], label, fontsize=text_size, fontweight='bold', ha='right', va='bottom', color=color))
-    adjust_text(texts)
+    plt.figure(figsize=(3, 2))
+    plt.bar(sorted_labels[:len(sorted_data)], sorted_data, color = 'skyblue', edgecolor='black')
     plt.title('Maximum signalling')
-    #plt.xlabel('Index')
     plt.ylabel('Signalling count')
     plt.grid(True)
+
+    # Adjusting x-axis labels to make the bars more compact
+    plt.xticks(fontsize=10)
+    plt.tight_layout()
+
     plt.show()
 
     # Plotting side effects
@@ -339,13 +340,8 @@ def draw_prepared_result(results):
     for element in sorted_objective_setting:
         res = results[element[1]]
         sorted_data.append(res['total_signalling'])
-    plt.figure(figsize=(12, 6))
-    plt.plot(sorted_data, marker='o', linestyle='-')
-    texts = []
-    for i, (label, color) in enumerate(zip(sorted_labels, sorted_colors)):
-        texts.append(plt.text(i, sorted_data[i], label, fontsize=text_size, fontweight='bold', ha='right', va='bottom',
-                              color=color))
-    adjust_text(texts)
+    plt.figure(figsize=(3, 2))
+    plt.bar(sorted_labels[:len(sorted_data)], sorted_data, color='skyblue', edgecolor='black')
     plt.title('Total Signalling')
     plt.xlabel('Index')
     plt.ylabel('Signalling count')
@@ -357,13 +353,8 @@ def draw_prepared_result(results):
     for element in sorted_objective_setting:
         res = results[element[1]]
         sorted_data.append(res['busy_time_balance_cv'])
-    plt.figure(figsize=(12, 6))
-    plt.plot(sorted_data, marker='o', linestyle='-')
-    texts = []
-    for i, (label, color) in enumerate(zip(sorted_labels, sorted_colors)):
-        texts.append(plt.text(i, sorted_data[i], label, fontsize=text_size, fontweight='bold', ha='right', va='bottom',
-                              color=color))
-    adjust_text(texts)
+    plt.figure(figsize=(3, 2))
+    plt.bar(sorted_labels[:len(sorted_data)], sorted_data, color='skyblue', edgecolor='black')
     plt.title('Busy time slot shares balance evaluation')
     plt.xlabel('Index')
     plt.ylabel('Coefficient of variation')
@@ -378,16 +369,18 @@ def draw_prepared_result(results):
         res = results[element[1]]
         sorted_mean.append(res['signalling_mean'])
         sorted_margin.append(res['signalling_margin'])
-    plt.figure(figsize=(12, 6))
-    plt.plot(sorted_mean, marker='o', linestyle='-')
-    plt.errorbar(range(len(sorted_mean)), sorted_mean, yerr=sorted_margin, fmt='o', ecolor='r', capsize=5)
-    texts = []
-    for i, (label, color) in enumerate(zip(sorted_labels, sorted_colors)):
-        texts.append(plt.text(i, sorted_mean[i], label, fontsize=text_size, fontweight='bold', ha='right', va='bottom', color=color))
-    adjust_text(texts)
+    plt.figure(figsize=(3, 2))
+    plt.bar(sorted_labels[:len(sorted_data)], sorted_mean, color='skyblue', edgecolor='black')
+    # plt.figure(figsize=(12, 6))
+    # plt.plot(sorted_mean, marker='o', linestyle='-')
+    # plt.errorbar(range(len(sorted_mean)), sorted_mean, yerr=sorted_margin, fmt='o', ecolor='r', capsize=5)
+    # texts = []
+    # for i, (label, color) in enumerate(zip(sorted_labels, sorted_colors)):
+    #     texts.append(plt.text(i, sorted_mean[i], label, fontsize=text_size, fontweight='bold', ha='right', va='bottom', color=color))
+    # adjust_text(texts)
     plt.xlabel('Index')
     plt.ylabel('Mean Value')
-    plt.title('busy slot mean with confidence Intervals')
+    plt.title('busy slot mean')
     plt.grid(True)
 
     print("Total reservation time: the lower, the better")
@@ -395,13 +388,8 @@ def draw_prepared_result(results):
     for element in sorted_objective_setting:
         res = results[element[1]]
         sorted_data.append(res['total_reservation'])
-    plt.figure(figsize=(12, 6))
-    plt.plot(sorted_data, marker='o', linestyle='-')
-    texts = []
-    for i, (label, color) in enumerate(zip(sorted_labels, sorted_colors)):
-        texts.append(plt.text(i, sorted_data[i], label, fontsize=text_size, fontweight='bold', ha='right', va='bottom',
-                              color=color))
-    adjust_text(texts)
+    plt.figure(figsize=(3, 2))
+    plt.bar(sorted_labels[:len(sorted_data)], sorted_data, color='skyblue', edgecolor='black')
     plt.title('Total reservation time')
     plt.xlabel('Index')
     plt.ylabel('Time slot count')
@@ -413,13 +401,8 @@ def draw_prepared_result(results):
     for element in sorted_objective_setting:
         res = results[element[1]]
         sorted_data.append(res['reservation_balance_cv'])
-    plt.figure(figsize=(12, 6))
-    plt.plot(sorted_data, marker='o', linestyle='-')
-    texts = []
-    for i, (label, color) in enumerate(zip(sorted_labels, sorted_colors)):
-        texts.append(plt.text(i, sorted_data[i], label, fontsize=text_size, fontweight='bold', ha='right', va='bottom',
-                              color=color))
-    adjust_text(texts)
+    plt.figure(figsize=(3, 2))
+    plt.bar(sorted_labels[:len(sorted_data)], sorted_data, color='skyblue', edgecolor='black')
     plt.title('Reservation balance across satellites evaluation')
     plt.xlabel('Index')
     plt.ylabel('Coefficient of variation')
@@ -431,13 +414,8 @@ def draw_prepared_result(results):
     for element in sorted_objective_setting:
         res = results[element[1]]
         sorted_data.append(res['delay_mean'])
-    plt.figure(figsize=(12, 6))
-    plt.plot(sorted_data, marker='o', linestyle='-')
-    texts = []
-    for i, (label, color) in enumerate(zip(sorted_labels, sorted_colors)):
-        texts.append(plt.text(i, sorted_data[i], label, fontsize=text_size, fontweight='bold', ha='right', va='bottom',
-                              color=color))
-    adjust_text(texts)
+    plt.figure(figsize=(3, 2))
+    plt.bar(sorted_labels[:len(sorted_data)], sorted_data, color='skyblue', edgecolor='black')
     plt.title('UE access time mean')
     plt.xlabel('Index')
     plt.ylabel('Time slot count')
@@ -449,13 +427,8 @@ def draw_prepared_result(results):
     for element in sorted_objective_setting:
         res = results[element[1]]
         sorted_data.append(res['delay_cv'])
-    plt.figure(figsize=(12, 6))
-    plt.plot(sorted_data, marker='o', linestyle='-')
-    texts = []
-    for i, (label, color) in enumerate(zip(sorted_labels, sorted_colors)):
-        texts.append(plt.text(i, sorted_data[i], label, fontsize=text_size, fontweight='bold', ha='right', va='bottom',
-                              color=color))
-    adjust_text(texts)
+    plt.figure(figsize=(3, 2))
+    plt.bar(sorted_labels[:len(sorted_data)], sorted_data, color='skyblue', edgecolor='black')
     plt.title('UE access time balance evaluation')
     plt.xlabel('Index')
     plt.ylabel('Coefficient of variation')
