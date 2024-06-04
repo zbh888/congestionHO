@@ -18,6 +18,8 @@ def initial_assignment(UEss, Satss, oracle):
             satid = random.choice(possible_satellites)
             ue.serving_satellite = Satss[satid]
             ue.serving_satellite_history.append(satid)
+            serving_length = ue.estimate_serving_length(satid)
+            Satss[satid].increment_my_load(serving_length, UE_HANDOVER_SIGNALLING_COUNT_ON_SOURCE)
     else:
         for ueid in UEss:
             ue = UEss[ueid]
@@ -25,6 +27,8 @@ def initial_assignment(UEss, Satss, oracle):
             assert (C[ueid, satid, 0] == 1)
             ue.serving_satellite = Satss[satid]
             ue.serving_satellite_history.append(satid)
+            serving_length = ue.estimate_serving_length(satid)
+            Satss[satid].increment_my_load(serving_length, UE_HANDOVER_SIGNALLING_COUNT_ON_SOURCE)
 
 
 def monitor_timestamp(env):

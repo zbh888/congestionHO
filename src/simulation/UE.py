@@ -63,6 +63,7 @@ class UE(Base):
                 candidates_utilities = []
                 for satid in candidates:
                     candidates_utilities.append(self.estimate_serving_length(satid))
+                print(f"handover at {self.env.now}")
                 data = {
                     "task": MEASUREMENT_REPORT,
                     "candidates": candidates.tolist(),
