@@ -71,7 +71,7 @@ class Queue:
             self.slots_status[slot] += 1
             self.reserved_number -= 1 # just for reservation count
 
-    def return_expected_access_time(self, ueid):
-        return self.access_issue_time_delay[ueid][0] + self.access_issue_time_delay[ueid][1]
+    def return_expected_issue_access_time(self, ueid):
+        return self.access_issue_time_delay[ueid][0], self.access_issue_time_delay[ueid][0] + self.access_issue_time_delay[ueid][1]
 
 

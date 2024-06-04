@@ -50,8 +50,9 @@ class Satellite(Base):
         # candidates_record[ueid] stores candidates
         self.candidates_record = {}
 
-        self.load_aware = {} # satid -> (time, (priority, load))
-        self.predicted_my_load = [0] * (self.DURATION + 5000)
+        self.load_aware = {} # satid -> (time, (priority, load, potential_load))
+        self.predicted_my_load = [0] * (self.DURATION + 5000) # They knows the future
+        self.predicted_my_load_potential = [0] * (self.DURATION + 5000) #So, no one knows the future
         self.within_one_slot_load_priority = 0
 
         # === target function ===
@@ -68,26 +69,37 @@ class Satellite(Base):
     # ====== Satellite functions ======
     def prepare_my_load_prediction(self):
 
-        return (self.within_one_slot_load_priority, self.predicted_my_load[self.env.now:self.env.now+self.access_Q.max_access_slots])
+        return (self.within_one_slot_load_priority,
+                self.predicted_my_load[self.env.now:self.env.now+self.access_Q.max_access_slots],
+                self.predicted_my_load_potential[self.env.now:self.env.now+self.access_Q.max_access_slots])
 
     def prepare_other_load_prediction(self, satid):
         if satid not in self.load_aware:
-            return (0, [])
+            return (0, [], [])
         else:
             candidate_time = self.load_aware[satid][0]
             candidate_priority = self.load_aware[satid][1][0]
-            candidate_load = self.load_aware[satid][1][self.env.now - candidate_time:]
-            return (candidate_priority, candidate_load)
+            candidate_load = self.load_aware[satid][1][1][self.env.now - candidate_time:]
+            candidate_load_potential = self.load_aware[satid][1][2][self.env.now - candidate_time:]
+            return (candidate_priority, candidate_load, candidate_load_potential)
 
     def increment_my_load(self, time, amount):
-        print(time)
         self.within_one_slot_load_priority += 1
         self.predicted_my_load[time] += amount
+
+    def increment_my_load_potential(self, time, amount):
+        self.within_one_slot_load_priority += 1
+        self.predicted_my_load_potential[time] += amount
 
     def decrease_my_load(self, time, amount):
         self.within_one_slot_load_priority += 1
         self.predicted_my_load[time] -= amount
         assert(self.predicted_my_load[time] >= 0)
+
+    def decrease_my_load_potential(self, time, amount):
+        self.within_one_slot_load_priority += 1
+        self.predicted_my_load_potential[time] -= amount
+        assert(self.predicted_my_load_potential[time] >= 0)
 
     def update_other_priority_load(self, satid, priority_load):
         if satid not in self.load_aware:
@@ -154,8 +166,10 @@ class Satellite(Base):
                 for candidate_id, candidate_priority_load in zip(candidates, candidates_priority_loads):
                     self.update_other_priority_load(candidate_id, candidate_priority_load)
                 condition = self.prepare_condition(ueid, source_id, candidates, utilities)
-                delay = condition.access_delay
-                self.increment_my_load(self.env.now + delay, SOURCE_HANDOVER_REQUEST_SIGNALLING_COUNT_ON_CANDIDATE)
+                self.increment_my_load_potential(self.env.now + condition.access_delay,
+                                                 SOURCE_HANDOVER_REQUEST_SIGNALLING_COUNT_ON_CANDIDATE)
+                self.increment_my_load_potential(self.env.now + condition.ue_utility,
+                                                 UE_HANDOVER_SIGNALLING_COUNT_ON_SOURCE)
                 data = {
                     "task": HANDOVER_RESPONSE,
                     "ueid": ueid,
@@ -192,6 +206,7 @@ class Satellite(Base):
                 ueid = data['from']
                 serving_length = data['serving_length']
                 self.increment_my_load(self.env.now + serving_length, UE_HANDOVER_SIGNALLING_COUNT_ON_SOURCE)
+                self.decrease_my_load_potential(self.env.now + serving_length, UE_HANDOVER_SIGNALLING_COUNT_ON_SOURCE)
                 assert (self.current_assigned_slot.include(ueid))
                 assert (self.current_assigned_slot.time == self.env.now)
                 takeover_condition = self.takeover_condition_record[ueid]
@@ -261,11 +276,14 @@ class Satellite(Base):
             # ================================================ Candidate
             if task == HANDOVER_CANCEL:
                 ueid = data['ueid']
+                serving_time = self.takeover_condition_record[ueid].ue_utility
                 # upon receving handover cancel, the candidate remove the UE's record
                 del self.takeover_condition_record[ueid]
-                expected_access_time = self.access_Q.return_expected_access_time(ueid)
+                issue_time, expected_access_time = self.access_Q.return_expected_issue_access_time(ueid)
+                expected_leaving_time = serving_time + issue_time
                 self.access_Q.release_resource(ueid)
-                self.decrease_my_load(expected_access_time, SOURCE_HANDOVER_REQUEST_SIGNALLING_COUNT_ON_CANDIDATE)
+                self.decrease_my_load_potential(expected_access_time, SOURCE_HANDOVER_REQUEST_SIGNALLING_COUNT_ON_CANDIDATE)
+                self.decrease_my_load_potential(expected_leaving_time, UE_HANDOVER_SIGNALLING_COUNT_ON_SOURCE)
 
     # This is a source satellite function
     def decide_best_target(self, ueid):

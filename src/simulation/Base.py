@@ -45,4 +45,4 @@ class Base:
         msg = json.dumps(msg)
         to.messageQ.put(msg)
         # disable log by disable the below line
-        print(f"[{self.env.now}] {self.type} {self.identity} sends {to.type} {to.identity} the message {msg}")
+        #print(f"[{self.env.now}] {self.type} {self.identity} sends {to.type} {to.identity} the message {msg}")
