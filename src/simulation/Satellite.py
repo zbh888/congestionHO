@@ -5,6 +5,7 @@ from Condition import *
 from Config import *
 from Counter import *
 from Queue import *
+import numpy as np
 
 
 class Satellite(Base):
@@ -311,26 +312,26 @@ class Satellite(Base):
             return targetid, corresponding_delay
         # This clause if for non-oracle
         else:
-            if SOURCE_ALG == SOURCE_ALG_RANDOM:
-                selected_condition = random.choice(conditions)
-            if SOURCE_ALG == SOURCE_ALG_EARLIEST:  # shortest delay
-                min_delay = WINDOW_SIZE * 2
-                condition_indices_with_shortest_delay = []
-                for condition in conditions:
-                    min_delay = min(min_delay, condition['access_delay'])
-                for index, condition in enumerate(conditions):
-                    if min_delay == condition['access_delay']:
-                        condition_indices_with_shortest_delay.append(index)
-                selected_condition = conditions[random.choice(condition_indices_with_shortest_delay)]
-            if SOURCE_ALG == SOURCE_ALG_LONGEST:  # longest serving
-                max_serving = -1
-                condition_indices_with_max_serving = []
-                for condition in conditions:
-                    max_serving = max(max_serving, condition['ue_utility'])
-                for index, condition in enumerate(conditions):
-                    if max_serving == condition['ue_utility']:
-                        condition_indices_with_max_serving.append(index)
-                selected_condition = conditions[random.choice(condition_indices_with_max_serving)]
+            # if SOURCE_ALG == SOURCE_ALG_RANDOM:
+            #     selected_condition = random.choice(conditions)
+            # if SOURCE_ALG == SOURCE_ALG_EARLIEST:  # shortest delay
+            #     min_delay = WINDOW_SIZE * 2
+            #     condition_indices_with_shortest_delay = []
+            #     for condition in conditions:
+            #         min_delay = min(min_delay, condition['access_delay'])
+            #     for index, condition in enumerate(conditions):
+            #         if min_delay == condition['access_delay']:
+            #             condition_indices_with_shortest_delay.append(index)
+            #     selected_condition = conditions[random.choice(condition_indices_with_shortest_delay)]
+            # if SOURCE_ALG == SOURCE_ALG_LONGEST:  # longest serving
+            #     max_serving = -1
+            #     condition_indices_with_max_serving = []
+            #     for condition in conditions:
+            #         max_serving = max(max_serving, condition['ue_utility'])
+            #     for index, condition in enumerate(conditions):
+            #         if max_serving == condition['ue_utility']:
+            #             condition_indices_with_max_serving.append(index)
+            #     selected_condition = conditions[random.choice(condition_indices_with_max_serving)]
             if SOURCE_ALG == SOURCE_ALG_OUR:
                 min_sum = min(c['future_potential_real_load'][0] + c['future_potential_real_load'][1] for c in conditions)
                 min_conditions = [c for c in conditions if
@@ -344,16 +345,37 @@ class Satellite(Base):
     def decide_delay(self, ueid, sourceid, candidates, utilities):
         assert (self.access_Q.counter - self.access_Q.max_access_slots == self.env.now)
         available_slots = self.access_Q.available_slots()
-        if CANDIDATE_ALG == CANDIDATE_ALG_EARLIEST:
-            # greedy
-            delay = min(available_slots) + 1
-        if CANDIDATE_ALG == CANDIDATE_ALG_RANDOM:
-            # random
-            delay = random.choice(available_slots) + 1
+        # if CANDIDATE_ALG == CANDIDATE_ALG_EARLIEST:
+        #     # greedy
+        #     delay = min(available_slots) + 1
+        # if CANDIDATE_ALG == CANDIDATE_ALG_RANDOM:
+        #     # random
+        #     delay = random.choice(available_slots) + 1
         if CANDIDATE_ALG == CANDIDATE_ALG_OUR:
-            #TODO print(available_slots)
-            delay = min(available_slots) + 1
-        return delay
+            available_slots = self.access_Q.available_slots()
+            loads = []
+            for candidate_id in candidates:
+                if candidate_id == self.identity:
+                    myload = self.prepare_my_load_prediction()
+                    my_real_load = np.array(myload[1])
+                    my_potential_load = np.array(myload[2])
+                    myload = my_real_load + my_potential_load
+                    loads.append(myload)
+                else:
+                    otherload = self.prepare_other_load_prediction(candidate_id)
+                    other_real_load = np.array(otherload[1])
+                    other_potential_load = np.array(otherload[2])
+                    otherload = other_real_load + other_potential_load
+                    padding_value = 0
+                    otherload = self.extend_array(otherload, len(available_slots), padding_value)
+                    loads.append(otherload)
+            loads = np.array(loads)
+            valid_indices = np.where(available_slots)[0]
+            A_valid = loads[:, valid_indices]
+            max_values = np.max(A_valid, axis=0)
+            min_index_in_max_values = np.argmin(max_values)
+            delay = valid_indices[min_index_in_max_values] + 1
+        return int(delay)
 
     def prepare_condition(self, ueid, sourceid, candidates, utilities):
         delay = self.decide_delay(ueid, sourceid, candidates, utilities)
@@ -369,3 +391,11 @@ class Satellite(Base):
         self.access_Q.insert(ueid, delay)
         self.record_max_delay = max(self.record_max_delay, delay)
         return condition
+
+    def extend_array(self, arry, length, padding_value):
+        current_length = len(arry)
+        assert (current_length <= length)
+        if current_length < length:
+            return np.pad(arry, (0, length - current_length), 'constant', constant_values=(padding_value,))
+        else:
+            return arry

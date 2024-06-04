@@ -1,5 +1,5 @@
 from collections import deque
-
+import numpy as np
 
 class slotQueue:
     def __init__(self, time, max_opportunity):
@@ -61,7 +61,7 @@ class Queue:
         self.reserved_number += 1 # just for reservation count
 
     def available_slots(self):
-        return [index for index, value in enumerate(self.slots_status) if value > 0]
+        return np.array([True if value > 0 else False for value in self.slots_status])
 
     def release_resource(self, ueid):
         issue_time, expected_time = self.return_expected_issue_access_time(ueid)
