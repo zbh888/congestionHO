@@ -84,23 +84,23 @@ class Satellite(Base):
             return (candidate_priority, candidate_load, candidate_load_potential)
 
     def increment_my_load(self, time, amount):
-        print(f"{self.identity},{self.env.now} [{time}, + {amount}]: real load")
+        #print(f"{self.identity},{self.env.now} [{time}, + {amount}]: real load")
         self.within_one_slot_load_priority += 1
         self.predicted_my_load[time] += amount
 
     def increment_my_load_potential(self, time, amount):
-        print(f"{self.identity},{self.env.now} [{time}, + {amount}]: potential load")
+        #print(f"{self.identity},{self.env.now} [{time}, + {amount}]: potential load")
         self.within_one_slot_load_priority += 1
         self.predicted_my_load_potential[time] += amount
 
     def decrease_my_load(self, time, amount):
-        print(f"{self.identity},{self.env.now} [{time}, - {amount}]: real load")
+        #print(f"{self.identity},{self.env.now} [{time}, - {amount}]: real load")
         self.within_one_slot_load_priority += 1
         self.predicted_my_load[time] -= amount
         assert(self.predicted_my_load[time] >= 0)
 
     def decrease_my_load_potential(self, time, amount):
-        print(f"{self.identity},{self.env.now} [{time}, - {amount}]: potential load")
+        #print(f"{self.identity},{self.env.now} [{time}, - {amount}]: potential load")
         self.within_one_slot_load_priority += 1
         self.predicted_my_load_potential[time] -= amount
         assert(self.predicted_my_load_potential[time] >= 0)
@@ -178,7 +178,7 @@ class Satellite(Base):
                     "task": HANDOVER_RESPONSE,
                     "ueid": ueid,
                     "condition": condition.toJSON(),
-                    'priority_load' : self.prepare_my_load_prediction()
+                    'priority_load' : self.prepare_my_load_prediction(),
                 }
                 self.send_message(
                     msg=data,
@@ -332,15 +332,10 @@ class Satellite(Base):
                         condition_indices_with_max_serving.append(index)
                 selected_condition = conditions[random.choice(condition_indices_with_max_serving)]
             if SOURCE_ALG == SOURCE_ALG_OUR:
-                # TODO
-                max_serving = -1
-                condition_indices_with_max_serving = []
-                for condition in conditions:
-                    max_serving = max(max_serving, condition['ue_utility'])
-                for index, condition in enumerate(conditions):
-                    if max_serving == condition['ue_utility']:
-                        condition_indices_with_max_serving.append(index)
-                selected_condition = conditions[random.choice(condition_indices_with_max_serving)]
+                min_sum = min(c['future_potential_real_load'][0] + c['future_potential_real_load'][1] for c in conditions)
+                min_conditions = [c for c in conditions if
+                                  c['future_potential_real_load'][0] + c['future_potential_real_load'][1] == min_sum]
+                selected_condition = random.choice(min_conditions)
             targetid = selected_condition['satid']
             delay = selected_condition['access_delay']
             return targetid, delay
@@ -366,8 +361,11 @@ class Satellite(Base):
         # TODO Should we consider the case when access time cannot happen with handover at the same time?
         if self.env.now + delay < self.DURATION:
             assert (self.coverage_info[ueid, self.identity, self.env.now + delay] == 1)
+        expected_leaving_time = ue_utility + self.env.now
         condition = Sat_condition(access_delay=delay, ueid=ueid, satid=self.identity, sourceid=sourceid,
-                                  ue_utility=ue_utility)
+                                  ue_utility=ue_utility,
+                                  future_potential_load = self.predicted_my_load_potential[expected_leaving_time],
+                                  future_real_load= self.predicted_my_load[expected_leaving_time])
         self.access_Q.insert(ueid, delay)
         self.record_max_delay = max(self.record_max_delay, delay)
         return condition

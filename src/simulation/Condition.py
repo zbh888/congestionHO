@@ -1,10 +1,11 @@
 class Sat_condition:
-    def __init__(self, access_delay, ueid, satid, sourceid, ue_utility):
+    def __init__(self, access_delay, ueid, satid, sourceid, ue_utility, future_potential_load, future_real_load):
         self.access_delay = access_delay
         self.ueid = ueid
         self.satid = satid
         self.sourceid = sourceid
         self.ue_utility = ue_utility
+        self.future_potential_real_load = (future_potential_load, future_real_load)
 
     def toJSON(self):
         return {
@@ -12,7 +13,8 @@ class Sat_condition:
             "ueid": self.ueid,
             "source": self.sourceid,
             "satid": self.satid,
-            "ue_utility": self.ue_utility
+            "ue_utility": self.ue_utility,
+            'future_potential_real_load': self.future_potential_real_load,
         }
 
 
