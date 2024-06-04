@@ -354,7 +354,7 @@ class Satellite(Base):
         if CANDIDATE_ALG == CANDIDATE_ALG_OUR:
             available_slots = self.access_Q.available_slots()
             if True not in available_slots:
-               assert(False) 
+               assert(False)
             loads = []
             for candidate_id in candidates:
                 if candidate_id == self.identity:

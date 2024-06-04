@@ -8,7 +8,7 @@
 
 S_ALG=('SOURCE_ALG_OUR')
 C_ALG=('CANDIDATE_ALG_OUR')
-U_ALG=('UE_RANDOM')
+U_ALG=('UE_LONGEST')
 Max_ACC=('4')
 
 # Loop through each element in S_ALG
