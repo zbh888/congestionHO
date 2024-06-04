@@ -84,19 +84,23 @@ class Satellite(Base):
             return (candidate_priority, candidate_load, candidate_load_potential)
 
     def increment_my_load(self, time, amount):
+        print(f"{self.identity},{self.env.now} [{time}, + {amount}]: real load")
         self.within_one_slot_load_priority += 1
         self.predicted_my_load[time] += amount
 
     def increment_my_load_potential(self, time, amount):
+        print(f"{self.identity},{self.env.now} [{time}, + {amount}]: potential load")
         self.within_one_slot_load_priority += 1
         self.predicted_my_load_potential[time] += amount
 
     def decrease_my_load(self, time, amount):
+        print(f"{self.identity},{self.env.now} [{time}, - {amount}]: real load")
         self.within_one_slot_load_priority += 1
         self.predicted_my_load[time] -= amount
         assert(self.predicted_my_load[time] >= 0)
 
     def decrease_my_load_potential(self, time, amount):
+        print(f"{self.identity},{self.env.now} [{time}, - {amount}]: potential load")
         self.within_one_slot_load_priority += 1
         self.predicted_my_load_potential[time] -= amount
         assert(self.predicted_my_load_potential[time] >= 0)
@@ -168,7 +172,7 @@ class Satellite(Base):
                 condition = self.prepare_condition(ueid, source_id, candidates, utilities)
                 self.increment_my_load_potential(self.env.now + condition.access_delay,
                                                  SOURCE_HANDOVER_REQUEST_SIGNALLING_COUNT_ON_CANDIDATE)
-                self.increment_my_load_potential(self.env.now + condition.ue_utility,
+                self.increment_my_load_potential(self.env.now + condition.ue_utility, # 21782
                                                  UE_HANDOVER_SIGNALLING_COUNT_ON_SOURCE)
                 data = {
                     "task": HANDOVER_RESPONSE,
@@ -204,9 +208,9 @@ class Satellite(Base):
             if task == RANDOM_ACCESS:
                 # Response to UE
                 ueid = data['from']
-                serving_length = data['serving_length']
-                self.increment_my_load(self.env.now + serving_length, UE_HANDOVER_SIGNALLING_COUNT_ON_SOURCE)
-                self.decrease_my_load_potential(self.env.now + serving_length, UE_HANDOVER_SIGNALLING_COUNT_ON_SOURCE)
+                expected_access_time, expected_leaving_time = self.estimated_access_handover_precise_time(ueid)
+                self.increment_my_load(expected_leaving_time, UE_HANDOVER_SIGNALLING_COUNT_ON_SOURCE)
+                self.decrease_my_load_potential(expected_leaving_time, UE_HANDOVER_SIGNALLING_COUNT_ON_SOURCE)
                 assert (self.current_assigned_slot.include(ueid))
                 assert (self.current_assigned_slot.time == self.env.now)
                 takeover_condition = self.takeover_condition_record[ueid]
@@ -276,14 +280,19 @@ class Satellite(Base):
             # ================================================ Candidate
             if task == HANDOVER_CANCEL:
                 ueid = data['ueid']
-                serving_time = self.takeover_condition_record[ueid].ue_utility
+                expected_access_time, expected_leaving_time = self.estimated_access_handover_precise_time(ueid)
                 # upon receving handover cancel, the candidate remove the UE's record
                 del self.takeover_condition_record[ueid]
-                issue_time, expected_access_time = self.access_Q.return_expected_issue_access_time(ueid)
-                expected_leaving_time = serving_time + issue_time
                 self.access_Q.release_resource(ueid)
                 self.decrease_my_load_potential(expected_access_time, SOURCE_HANDOVER_REQUEST_SIGNALLING_COUNT_ON_CANDIDATE)
                 self.decrease_my_load_potential(expected_leaving_time, UE_HANDOVER_SIGNALLING_COUNT_ON_SOURCE)
+
+    def estimated_access_handover_precise_time(self, ueid):
+        serving_time = self.takeover_condition_record[ueid].ue_utility
+        issue_time, expected_access_time = self.access_Q.return_expected_issue_access_time(ueid)
+        expected_leaving_time = serving_time + issue_time
+        return expected_access_time, expected_leaving_time
+
 
     # This is a source satellite function
     def decide_best_target(self, ueid):

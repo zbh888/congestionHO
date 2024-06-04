@@ -40,8 +40,8 @@ class UE(Base):
         env.process(self.init())
         if self.identity == 1:
             assert(True)
-        self.env.process(self.action_monitor())
-        self.env.process(self.handle_messages())
+            self.env.process(self.action_monitor())
+            self.env.process(self.handle_messages())
 
     # ====== UE functions ======
     def action_monitor(self):
@@ -76,11 +76,9 @@ class UE(Base):
             if self.state == RRC_CONFIGURED:
                 if self.determine_if_access():
                     targetid = self.condition.targetid
-                    serving_length = self.estimate_serving_length(targetid)
                     target = self.satellites[targetid]
                     data = {
                         "task": RANDOM_ACCESS,
-                        "serving_length": serving_length,
                     }
                     self.send_message(
                         msg=data,

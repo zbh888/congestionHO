@@ -64,7 +64,7 @@ class Queue:
         return [index for index, value in enumerate(self.slots_status) if value > 0]
 
     def release_resource(self, ueid):
-        expected_time = self.return_expected_access_time(ueid)
+        issue_time, expected_time = self.return_expected_issue_access_time(ueid)
         slot = expected_time - self.counter + self.max_access_slots - 1
         if slot >= 0:
             self.Q[slot].delete(ueid)
