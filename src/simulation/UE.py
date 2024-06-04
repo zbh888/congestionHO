@@ -40,8 +40,8 @@ class UE(Base):
         env.process(self.init())
         if self.identity == 1:
             assert(True)
-            self.env.process(self.action_monitor())
-            self.env.process(self.handle_messages())
+        self.env.process(self.action_monitor())
+        self.env.process(self.handle_messages())
 
     # ====== UE functions ======
     def action_monitor(self):

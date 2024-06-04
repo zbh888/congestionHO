@@ -331,6 +331,8 @@ class Satellite(Base):
                     if max_serving == condition['ue_utility']:
                         condition_indices_with_max_serving.append(index)
                 selected_condition = conditions[random.choice(condition_indices_with_max_serving)]
+            if SOURCE_ALG == SOURCE_ALG_OUR:
+                selected_condition = random.choice(conditions)
             targetid = selected_condition['satid']
             delay = selected_condition['access_delay']
             return targetid, delay
@@ -344,6 +346,8 @@ class Satellite(Base):
             delay = min(available_slots) + 1
         if CANDIDATE_ALG == CANDIDATE_ALG_RANDOM:
             # random
+            delay = random.choice(available_slots) + 1
+        if CANDIDATE_ALG == CANDIDATE_ALG_OUR:
             delay = random.choice(available_slots) + 1
         return delay
 
