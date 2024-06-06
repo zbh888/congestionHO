@@ -52,7 +52,7 @@ class Satellite(Base):
         self.candidates_record = {}
 
         self.load_aware = {} # satid -> (time, (priority, load, potential_load))
-        self.predicted_my_load = [0] * (self.DURATION + 5000) # They knows the future
+        self.predicted_my_load = [0] * (self.DURATION + 5000) # They know the future
         self.predicted_my_load_potential = [0] * (self.DURATION + 5000) #So, no one knows the future
         self.within_one_slot_load_priority = 0
 
@@ -71,8 +71,8 @@ class Satellite(Base):
     def prepare_my_load_prediction(self):
 
         return (self.within_one_slot_load_priority,
-                self.predicted_my_load[self.env.now:self.env.now+self.access_Q.max_access_slots],
-                self.predicted_my_load_potential[self.env.now:self.env.now+self.access_Q.max_access_slots])
+                self.predicted_my_load[self.env.now:self.env.now+self.access_Q.max_access_slots + 1],
+                self.predicted_my_load_potential[self.env.now:self.env.now+self.access_Q.max_access_slots + 1])
 
     def prepare_other_load_prediction(self, satid):
         if satid not in self.load_aware:
@@ -174,7 +174,7 @@ class Satellite(Base):
                 condition = self.prepare_condition(ueid, source_id, candidates, utilities)
                 self.increment_my_load_potential(self.env.now + condition.access_delay,
                                                  SOURCE_HANDOVER_REQUEST_SIGNALLING_COUNT_ON_CANDIDATE)
-                self.increment_my_load_potential(self.env.now + condition.ue_utility, # 21782
+                self.increment_my_load_potential(self.env.now + condition.ue_utility,
                                                  UE_HANDOVER_SIGNALLING_COUNT_ON_SOURCE)
                 data = {
                     "task": HANDOVER_RESPONSE,
@@ -342,7 +342,6 @@ class Satellite(Base):
         #     # random
         #     delay = random.choice(available_slots) + 1
         if CANDIDATE_ALG == CANDIDATE_OUR:
-            print(candidates)
             available_slots = self.access_Q.available_slots()
             if True not in available_slots:
                assert(False)
@@ -350,14 +349,14 @@ class Satellite(Base):
             for candidate_id in candidates:
                 if candidate_id == self.identity:
                     myload = self.prepare_my_load_prediction()
-                    my_real_load = np.array(myload[1])
-                    my_potential_load = np.array(myload[2])
+                    my_real_load = np.array(myload[1])[1:]
+                    my_potential_load = np.array(myload[2])[1:]
                     myload = my_real_load + my_potential_load
                     loads.append(myload)
                 else:
                     otherload = self.prepare_other_load_prediction(candidate_id)
-                    other_real_load = np.array(otherload[1])
-                    other_potential_load = np.array(otherload[2])
+                    other_real_load = np.array(otherload[1])[1:]
+                    other_potential_load = np.array(otherload[2])[1:]
                     otherload = other_real_load + other_potential_load
                     padding_value = 0
                     otherload = self.extend_array(otherload, len(available_slots), padding_value)
