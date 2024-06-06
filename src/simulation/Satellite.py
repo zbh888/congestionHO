@@ -144,6 +144,7 @@ class Satellite(Base):
                 candidates = data['candidates']
                 assert (ueid not in self.condition_record)
                 assert (ueid not in self.candidates_record)
+                candidates, utilities = self.candidates_selection(candidates, data['utility'])
                 self.condition_record[ueid] = []
                 self.candidates_record[ueid] = candidates
                 for satid in candidates:
@@ -152,7 +153,7 @@ class Satellite(Base):
                         "task": HANDOVER_REQUEST,
                         "ueid": ueid,
                         "candidates": candidates,
-                        "utility": data['utility'],
+                        "utility": utilities,
                         "priority_load": self.prepare_my_load_prediction(),
                         "candidates_priority_load": [self.prepare_other_load_prediction(c_satid) for c_satid in candidates]
                     }
@@ -294,54 +295,43 @@ class Satellite(Base):
         expected_leaving_time = serving_time + issue_time
         return expected_access_time, expected_leaving_time
 
+    def prepare_condition(self, ueid, sourceid, candidates, utilities):
+        delay = self.decide_delay(ueid, sourceid, candidates, utilities)
+        ue_utility = utilities[candidates.index(self.identity)]
+        # TODO Should we consider the case when access time cannot happen with handover at the same time?
+        if self.env.now + delay < self.DURATION:
+            assert (self.coverage_info[ueid, self.identity, self.env.now + delay] == 1)
+        expected_leaving_time = ue_utility + self.env.now
+        condition = Sat_condition(access_delay=delay, ueid=ueid, satid=self.identity, sourceid=sourceid,
+                                  ue_utility=ue_utility,
+                                  future_potential_load = self.predicted_my_load_potential[expected_leaving_time],
+                                  future_real_load= self.predicted_my_load[expected_leaving_time])
+        self.access_Q.insert(ueid, delay)
+        self.record_max_delay = max(self.record_max_delay, delay)
+        return condition
 
-    # This is a source satellite function
-    def decide_best_target(self, ueid):
-        conditions = self.condition_record[ueid]
-        if self.oracle is not None:
-            targetid = self.oracle.query_next_satellite(ueid, self.identity)
-        if self.oracle is not None and targetid != -1:
-            # TODO not tested
-            found = False
-            for condition in conditions:
-                if targetid == condition['satid']:
-                    found = True
-                    corresponding_delay = condition['access_delay']
-            if not found:
-                raise AssertionError("The UE did not receive condition from oracle arranged target satellite")
-            return targetid, corresponding_delay
-        # This clause if for non-oracle
+    def extend_array(self, arry, length, padding_value):
+        current_length = len(arry)
+        assert (current_length <= length)
+        if current_length < length:
+            return np.pad(arry, (0, length - current_length), 'constant', constant_values=(padding_value,))
         else:
-            # if SOURCE_ALG == SOURCE_ALG_RANDOM:
-            #     selected_condition = random.choice(conditions)
-            # if SOURCE_ALG == SOURCE_ALG_EARLIEST:  # shortest delay
-            #     min_delay = WINDOW_SIZE * 2
-            #     condition_indices_with_shortest_delay = []
-            #     for condition in conditions:
-            #         min_delay = min(min_delay, condition['access_delay'])
-            #     for index, condition in enumerate(conditions):
-            #         if min_delay == condition['access_delay']:
-            #             condition_indices_with_shortest_delay.append(index)
-            #     selected_condition = conditions[random.choice(condition_indices_with_shortest_delay)]
-            # if SOURCE_ALG == SOURCE_ALG_LONGEST:  # longest serving
-            #     max_serving = -1
-            #     condition_indices_with_max_serving = []
-            #     for condition in conditions:
-            #         max_serving = max(max_serving, condition['ue_utility'])
-            #     for index, condition in enumerate(conditions):
-            #         if max_serving == condition['ue_utility']:
-            #             condition_indices_with_max_serving.append(index)
-            #     selected_condition = conditions[random.choice(condition_indices_with_max_serving)]
-            if SOURCE_ALG == SOURCE_ALG_OUR:
-                min_sum = min(c['future_potential_real_load'][0] + c['future_potential_real_load'][1] for c in conditions)
-                min_conditions = [c for c in conditions if
-                                  c['future_potential_real_load'][0] + c['future_potential_real_load'][1] == min_sum]
-                selected_condition = random.choice(min_conditions)
-            targetid = selected_condition['satid']
-            delay = selected_condition['access_delay']
-            return targetid, delay
+            return arry
 
-    # This is a candidate satellite function
+    def candidates_selection(self, candidates, utilities):
+        zipped_lists = list(zip(candidates, utilities))
+        if SOURCE_SELECTION_ALG == SOURCE_SELECTION_RANDOM:
+            random_selected_pairs = random.sample(zipped_lists, NUMBER_CANDIDATE)
+            selected_candidates, selected_utilities = zip(*random_selected_pairs)
+        elif SOURCE_SELECTION_ALG == SOURCE_SELECTION_LONGEST:
+            sorted_zipped_lists = sorted(zipped_lists, key=lambda x: x[1], reverse=True)
+            sorted_candidates, sorted_utilities = zip(*sorted_zipped_lists)
+            selected_candidates = sorted_candidates[:NUMBER_CANDIDATE]
+            selected_utilities = sorted_utilities[:NUMBER_CANDIDATE]
+        elif SOURCE_SELECTION_ALG == SOURCE_SELECTION_OUR:
+            pass
+        return selected_candidates, selected_utilities
+
     def decide_delay(self, ueid, sourceid, candidates, utilities):
         assert (self.access_Q.counter - self.access_Q.max_access_slots == self.env.now)
         available_slots = self.access_Q.available_slots()
@@ -351,7 +341,7 @@ class Satellite(Base):
         # if CANDIDATE_ALG == CANDIDATE_ALG_RANDOM:
         #     # random
         #     delay = random.choice(available_slots) + 1
-        if CANDIDATE_ALG == CANDIDATE_ALG_OUR:
+        if CANDIDATE_ALG == CANDIDATE_OUR:
             available_slots = self.access_Q.available_slots()
             if True not in available_slots:
                assert(False)
@@ -379,25 +369,27 @@ class Satellite(Base):
             delay = valid_indices[min_index_in_max_values] + 1
         return int(delay)
 
-    def prepare_condition(self, ueid, sourceid, candidates, utilities):
-        delay = self.decide_delay(ueid, sourceid, candidates, utilities)
-        ue_utility = utilities[candidates.index(self.identity)]
-        # TODO Should we consider the case when access time cannot happen with handover at the same time?
-        if self.env.now + delay < self.DURATION:
-            assert (self.coverage_info[ueid, self.identity, self.env.now + delay] == 1)
-        expected_leaving_time = ue_utility + self.env.now
-        condition = Sat_condition(access_delay=delay, ueid=ueid, satid=self.identity, sourceid=sourceid,
-                                  ue_utility=ue_utility,
-                                  future_potential_load = self.predicted_my_load_potential[expected_leaving_time],
-                                  future_real_load= self.predicted_my_load[expected_leaving_time])
-        self.access_Q.insert(ueid, delay)
-        self.record_max_delay = max(self.record_max_delay, delay)
-        return condition
-
-    def extend_array(self, arry, length, padding_value):
-        current_length = len(arry)
-        assert (current_length <= length)
-        if current_length < length:
-            return np.pad(arry, (0, length - current_length), 'constant', constant_values=(padding_value,))
+    def decide_best_target(self, ueid):
+        conditions = self.condition_record[ueid]
+        if self.oracle is not None:
+            targetid = self.oracle.query_next_satellite(ueid, self.identity)
+        if self.oracle is not None and targetid != -1:
+            # TODO not tested
+            found = False
+            for condition in conditions:
+                if targetid == condition['satid']:
+                    found = True
+                    corresponding_delay = condition['access_delay']
+            if not found:
+                raise AssertionError("The UE did not receive condition from oracle arranged target satellite")
+            return targetid, corresponding_delay
+        # This clause if for non-oracle
         else:
-            return arry
+            if SOURCE_DECISION_ALG == SOURCE_DECISION_OUR:
+                min_sum = min(c['future_potential_real_load'][0] + c['future_potential_real_load'][1] for c in conditions)
+                min_conditions = [c for c in conditions if
+                                  c['future_potential_real_load'][0] + c['future_potential_real_load'][1] == min_sum]
+                selected_condition = random.choice(min_conditions)
+            targetid = selected_condition['satid']
+            delay = selected_condition['access_delay']
+            return targetid, delay

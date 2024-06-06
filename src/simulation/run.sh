@@ -1,23 +1,26 @@
 #!/bin/bash
 
-# Define the arrays
-#S_ALG=('S_LONGEST' 'S_EARLIEST' 'S_RANDOM')
-#C_ALG=('C_EARLIEST' 'C_RANDOM')
-#U_ALG=('UE_LONGEST' 'UE_RANDOM')
-#Max_ACC=('4' '8' '12')
+#S_ALG=('SOURCE_ALG_OUR')
+#C_ALG=('CANDIDATE_ALG_OUR')
+#U_ALG=('UE_LONGEST')
+#Max_ACC=('4')
 
-S_ALG=('SOURCE_ALG_OUR')
-C_ALG=('CANDIDATE_ALG_OUR')
-U_ALG=('UE_LONGEST')
+# Define the arrays
+SS_ALG=('SS_LONGEST')
+C_ALG=('C_OUR')
+SD_ALG=('SD_OUR')
 Max_ACC=('4')
 
-# Loop through each element in S_ALG
-for s in "${S_ALG[@]}"; do
-  # Loop through each element in C_ALG
+#SD_ALG=('SD_LONGEST')
+#C_ALG=('C_RANDOM')
+#SS_ALG=('SS_LONGEST')
+#Max_ACC=('8' '12')
+
+for ss in "${SS_ALG[@]}"; do
   for c in "${C_ALG[@]}"; do
-    for u in "${U_ALG[@]}"; do
+    for sd in "${SD_ALG[@]}"; do
       for a in "${Max_ACC[@]}"; do
-        python3 main.py $s $c $u $a 1> ./result/${s}${c}${u}${a}logs.txt
+        python3 main.py $sd $c $ss $a 1> ./result/${sd}${c}${ss}${a}logs.txt
       done
     done
   done

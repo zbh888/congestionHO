@@ -38,8 +38,6 @@ class UE(Base):
 
         # Running Process
         env.process(self.init())
-        if self.identity == 1:
-            assert(True)
         self.env.process(self.action_monitor())
         self.env.process(self.handle_messages())
 
@@ -56,14 +54,12 @@ class UE(Base):
                 covered_satellites_now = np.where(self.coverage_info[self.identity, :, now] == 1)[0]
                 covered_satellites_future = \
                 np.where(self.coverage_info[self.identity, :, min(now + WINDOW_SIZE, self.DURATION - 1)] == 1)[0]
-                possible_candidates = np.intersect1d(covered_satellites_now, covered_satellites_future)
-                candidates = self.select_candidates(possible_candidates)
-                assert (len(candidates) > 0)
+                candidates = np.intersect1d(covered_satellites_now, covered_satellites_future)
+                assert (len(candidates) >= NUMBER_CANDIDATE)
                 source = self.satellites[self.serving_satellite.identity]
                 candidates_utilities = []
                 for satid in candidates:
                     candidates_utilities.append(self.estimate_serving_length(satid))
-                print(f"handover at {self.env.now}")
                 data = {
                     "task": MEASUREMENT_REPORT,
                     "candidates": candidates.tolist(),
@@ -76,8 +72,7 @@ class UE(Base):
             # ================================================
             if self.state == RRC_CONFIGURED:
                 if self.determine_if_access():
-                    targetid = self.condition.targetid
-                    target = self.satellites[targetid]
+                    target = self.satellites[self.condition.targetid]
                     data = {
                         "task": RANDOM_ACCESS,
                     }
@@ -122,49 +117,57 @@ class UE(Base):
     def determine_if_access(self):
         return self.condition.access_time == self.env.now
 
+    def prepare_candidates_utilities(self, candidates):
+        candidate_utility = []
+        for satid in candidates:
+            serving_time = self.estimate_serving_length(satid)
+            if serving_time > WINDOW_SIZE:  # TODO This may be adjusted to min_serving_time
+                candidate_utility.append((satid, self.estimate_serving_length(satid)))
+        return candidates.tolist(), candidate_utility
+
     # This will use orcale if applicable
-    def select_candidates(self, candidates):
-        if self.oracle is not None:
-            targetid = self.oracle.query_next_satellite(self.identity, self.serving_satellite.identity)
-
-        if self.oracle is not None and targetid != -1:
-            if targetid not in candidates:
-                raise AssertionError(
-                    f"UE {self.identity} at time: {self.env.now}, serving_satellite {self.serving_satellite.identity}, target {targetid} not in the candidate set")
-            if len(candidates) > NUMBER_CANDIDATE:
-                candidates2 = copy.deepcopy(candidates)
-                candidates2.remove(targetid)
-                selected_candidates = random.sample(candidates2, NUMBER_CANDIDATE - 1)
-                selected_candidates.append(targetid)
-                return np.array(selected_candidates)
-            else:
-                return candidates
-
-
-        else:
-            if len(candidates) > NUMBER_CANDIDATE:
-                candidate_utility = []
-                for satid in candidates:
-                    serving_time = self.estimate_serving_length(satid)
-                    if serving_time > WINDOW_SIZE:  # TODO This may be adjusted to min_serving_time
-                        candidate_utility.append((satid, self.estimate_serving_length(satid)))
-                sorted_list = sorted(candidate_utility, key=lambda x: -x[1])
-                # find best candidates
-                if UE_ALG == UE_ALG_LONGEST:
-                    selected_candidates = [x[0] for x in sorted_list][:NUMBER_CANDIDATE]
-                # random
-                elif UE_ALG == UE_ALG_RANDOM:
-                    selected_candidates = random.sample(candidates.tolist(), NUMBER_CANDIDATE)
-                else:
-                    print(UE_ALG)
-                return np.array(selected_candidates)
-            else:
-                return candidates
+    # def select_candidates(self, candidates):
+    #     if self.oracle is not None:
+    #         targetid = self.oracle.query_next_satellite(self.identity, self.serving_satellite.identity)
+    #
+    #     if self.oracle is not None and targetid != -1:
+    #         if targetid not in candidates:
+    #             raise AssertionError(
+    #                 f"UE {self.identity} at time: {self.env.now}, serving_satellite {self.serving_satellite.identity}, target {targetid} not in the candidate set")
+    #         if len(candidates) > NUMBER_CANDIDATE:
+    #             candidates2 = copy.deepcopy(candidates)
+    #             candidates2.remove(targetid)
+    #             selected_candidates = random.sample(candidates2, NUMBER_CANDIDATE - 1)
+    #             selected_candidates.append(targetid)
+    #             return np.array(selected_candidates)
+    #         else:
+    #             return candidates
+    #
+    #
+    #     else:
+    #         if len(candidates) > NUMBER_CANDIDATE:
+    #             candidate_utility = []
+    #             for satid in candidates:
+    #                 serving_time = self.estimate_serving_length(satid)
+    #                 if serving_time > WINDOW_SIZE:  # TODO This may be adjusted to min_serving_time
+    #                     candidate_utility.append((satid, self.estimate_serving_length(satid)))
+    #             sorted_list = sorted(candidate_utility, key=lambda x: -x[1])
+    #             # find best candidates
+    #             if UE_ALG == UE_ALG_LONGEST:
+    #                 selected_candidates = [x[0] for x in sorted_list][:NUMBER_CANDIDATE]
+    #             # random
+    #             elif UE_ALG == UE_ALG_RANDOM:
+    #                 selected_candidates = random.sample(candidates.tolist(), NUMBER_CANDIDATE)
+    #             else:
+    #                 print(UE_ALG)
+    #             return np.array(selected_candidates)
+    #         else:
+    #             return candidates
 
     def estimate_serving_length(self, satid):
         # The returned value means from the current time + {return}, it will perform handover.
         x, = np.where(self.coverage_info[self.identity, satid, self.env.now:] == 0)
         if len(x) == 0:
-            return 4000 # So, it goes to the end of the simulation
+            return 4000
         else:
             return int(x[0] - 1)
