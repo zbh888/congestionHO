@@ -153,9 +153,8 @@ public:
 int main() {
     int seed = 20702017;
     int N_satellites_one_trajectory = 8;
-    int N_UE = 2000;
+    int N_UE = 20;
     double T_TOTAL = 200;
-    double T_UNIT = 1;
     double T_UNIT2 = 0.01;
 
     bool feasible = true;
@@ -186,7 +185,6 @@ int main() {
     }
 
     auto start = std::chrono::high_resolution_clock::now();
-    auto data = generateC(feasible, T_UNIT, T_TOTAL, UEs, satellites);
     auto data2 = generateC(feasible, T_UNIT2, T_TOTAL, UEs, satellites);
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << "Time taken: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
@@ -194,20 +192,6 @@ int main() {
     std::ofstream file("data_optimizer.bin", std::ios::binary);
 
     auto end2 = std::chrono::high_resolution_clock::now();
-    // Write the dimensions of the data
-    size_t dim1 = data.size();
-    file.write(reinterpret_cast<char *>(&dim1), sizeof(dim1));
-
-    for (const auto &vec2d: data) {
-        size_t dim2 = vec2d.size();
-        file.write(reinterpret_cast<char *>(&dim2), sizeof(dim2));
-
-        for (const auto &vec1d: vec2d) {
-            size_t dim3 = vec1d.size();
-            file.write(reinterpret_cast<char *>(&dim3), sizeof(dim3));
-            file.write(reinterpret_cast<const char *>(vec1d.data()), dim3 * sizeof(int));
-        }
-    }
 
     size_t dim1_2 = data2.size();
     std::ofstream file2("data_simulation.bin", std::ios::binary);
