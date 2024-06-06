@@ -83,9 +83,6 @@ class Satellite(Base):
                 assert (ueid not in self.condition_record)
                 assert (ueid not in self.candidates_record)
                 candidates, utilities = self.candidates_selection(candidates, data['utility'])
-                print(candidates)
-                print()
-                print(utilities)
                 self.condition_record[ueid] = []
                 self.candidates_record[ueid] = candidates
                 for satid in candidates:
@@ -94,7 +91,7 @@ class Satellite(Base):
                         "task": HANDOVER_REQUEST,
                         "ueid": ueid,
                         "candidates": candidates,
-                        "utility": data['utility'],
+                        "utility": utilities,
                     }
                     self.send_message(
                         msg=data,
