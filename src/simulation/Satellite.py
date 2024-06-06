@@ -227,9 +227,9 @@ class Satellite(Base):
             return targetid, corresponding_delay
         # This clause if for non-oracle
         else:
-            if SOURCE_ALG == SOURCE_ALG_RANDOM:
+            if SOURCE_DECISION_ALG == SOURCE_DECISION_RANDOM:
                 selected_condition = random.choice(conditions)
-            if SOURCE_ALG == SOURCE_ALG_EARLIEST:  # shortest delay
+            if SOURCE_DECISION_ALG == SOURCE_DECISION_EARLIEST:  # shortest delay
                 min_delay = WINDOW_SIZE * 2
                 condition_indices_with_shortest_delay = []
                 for condition in conditions:
@@ -238,7 +238,7 @@ class Satellite(Base):
                     if min_delay == condition['access_delay']:
                         condition_indices_with_shortest_delay.append(index)
                 selected_condition = conditions[random.choice(condition_indices_with_shortest_delay)]
-            if SOURCE_ALG == SOURCE_ALG_LONGEST:  # longest serving
+            if SOURCE_DECISION_ALG == SOURCE_DECISION_LONGEST:  # longest serving
                 max_serving = -1
                 condition_indices_with_max_serving = []
                 for condition in conditions:
@@ -255,10 +255,10 @@ class Satellite(Base):
     def decide_delay(self, ueid, sourceid, candidates, utilities):
         assert (self.access_Q.counter - self.access_Q.max_access_slots == self.env.now)
         available_slots = self.access_Q.available_slots()
-        if CANDIDATE_ALG == CANDIDATE_ALG_EARLIEST:
+        if CANDIDATE_ALG == CANDIDATE_EARLIEST:
             # greedy
             delay = min(available_slots) + 1
-        if CANDIDATE_ALG == CANDIDATE_ALG_RANDOM:
+        if CANDIDATE_ALG == CANDIDATE_RANDOM:
             # random
             delay = random.choice(available_slots) + 1
         return delay
@@ -278,4 +278,13 @@ class Satellite(Base):
 
     # You select three
     def candidates_selection(self, candidates, utilities):
-        return candidates, utilities
+        zipped_lists = list(zip(candidates, utilities))
+        if SOURCE_SELECTION_ALG == SOURCE_SELECTION_RANDOM:
+            random_selected_pairs = random.sample(zipped_lists, NUMBER_CANDIDATE)
+            selected_candidates, selected_utilities = zip(*random_selected_pairs)
+        elif SOURCE_SELECTION_ALG == SOURCE_SELECTION_LONGEST:
+            sorted_zipped_lists = sorted(zipped_lists, key=lambda x: x[1], reverse=True)
+            sorted_candidates, sorted_utilities = zip(*sorted_zipped_lists)
+            selected_candidates = sorted_candidates[:NUMBER_CANDIDATE]
+            selected_utilities = sorted_utilities[:NUMBER_CANDIDATE]
+        return selected_candidates, selected_utilities
