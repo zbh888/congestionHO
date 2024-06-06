@@ -342,6 +342,7 @@ class Satellite(Base):
         #     # random
         #     delay = random.choice(available_slots) + 1
         if CANDIDATE_ALG == CANDIDATE_OUR:
+            print(candidates)
             available_slots = self.access_Q.available_slots()
             if True not in available_slots:
                assert(False)
