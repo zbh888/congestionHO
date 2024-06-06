@@ -82,6 +82,10 @@ class Satellite(Base):
                 candidates = data['candidates']
                 assert (ueid not in self.condition_record)
                 assert (ueid not in self.candidates_record)
+                candidates, utilities = self.candidates_selection(candidates, data['utility'])
+                print(candidates)
+                print()
+                print(utilities)
                 self.condition_record[ueid] = []
                 self.candidates_record[ueid] = candidates
                 for satid in candidates:
@@ -270,3 +274,8 @@ class Satellite(Base):
         self.access_Q.insert(ueid, delay)
         self.record_max_delay = max(self.record_max_delay, delay)
         return condition
+
+
+    # You select three
+    def candidates_selection(self, candidates, utilities):
+        return candidates, utilities
