@@ -1,6 +1,8 @@
 [submodule "src/generateScenario"]
 	path = src/generateScenario
-	url = https://github.com/zbh888/congestionHOgenerateScenario.git
+    url = https://github.com/zbh888/congestionHOgenerateScenario.git
+    branch = main
 [submodule "src/optimizer"]
 	path = src/optimizer
-	url = https://github.com/zbh888/congestionHOoptimizer.git
+    url = https://github.com/zbh888/congestionHOoptimizer.git
+    branch = main
