@@ -15,7 +15,7 @@ Max_ACC=('4')
 #C_ALG=('C_RANDOM')
 #SS_ALG=('SS_LONGEST')
 #Max_ACC=('8' '12')
-
+start_time=$(date +%s)
 for ss in "${SS_ALG[@]}"; do
   for c in "${C_ALG[@]}"; do
     for sd in "${SD_ALG[@]}"; do
@@ -27,3 +27,6 @@ for ss in "${SS_ALG[@]}"; do
 done
 
 zip -r result.zip result/*
+end_time=$(date +%s)
+duration=$((end_time - start_time))
+echo "Total execution time: $duration seconds"
