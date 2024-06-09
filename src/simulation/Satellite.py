@@ -281,7 +281,7 @@ class Satellite(Base):
             elif task == SN_STATUS_TRANSFER:
                 data = {
                     "task": PATH_SWITCH_REQUEST,
-                    "sourceid": data['from']
+                    "sourceid": data['from'],
                 }
                 self.send_message(
                     msg=data,
@@ -300,11 +300,14 @@ class Satellite(Base):
                 source = self.satellites[data['sourceid']]
                 data = {
                     "task": UE_CONTEXT_RELEASE,
+                    'priority_load': self.prepare_my_load_prediction()
                 }
                 self.send_message(
                     msg=data,
                     to=source
                 )
+            elif task == UE_CONTEXT_RELEASE:
+                assert (True)
             else:
                 assert False
 

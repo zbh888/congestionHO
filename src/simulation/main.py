@@ -97,6 +97,7 @@ if __name__ == "__main__":
                 env=env,
                 oracle=simulation_oracle,
             )
+            Satellites[ID].AMF = amf
         else:
             print("ERROR")
 
