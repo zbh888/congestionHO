@@ -34,6 +34,7 @@ class Satellite(Base):
                       object_type="Satellite")
 
         self.coverage_r = coverage_r
+        self.AMF = None
         self.height = height
         self.velocity = velocity
         self.sind = sind
@@ -135,7 +136,7 @@ class Satellite(Base):
             assert (data['to'] == self.identity)
             now = self.env.now
             task = data['task']
-            if task not in [MEASUREMENT_REPORT, RANDOM_ACCESS, RRC_RECONFIGURATION_COMPLETE]:
+            if task not in [MEASUREMENT_REPORT, RANDOM_ACCESS, RRC_RECONFIGURATION_COMPLETE, PATH_SWITCH_REQUEST_ACK]:
                 self.load_aware[data['from']] = (self.env.now, data['priority_load'])
             self.counter.increment(task, now)
             # ================================================ Source
@@ -162,7 +163,7 @@ class Satellite(Base):
                         to=target_satellite
                     )
             # ================================================ Target + Candidate
-            if task == HANDOVER_REQUEST:
+            elif task == HANDOVER_REQUEST:
                 source_id = data['from']
                 requested_satellite = self.satellites[source_id]
                 ueid = data['ueid']
@@ -188,7 +189,7 @@ class Satellite(Base):
                 )
                 self.takeover_condition_record[ueid] = condition
             # ================================================ Source
-            if task == HANDOVER_RESPONSE:
+            elif task == HANDOVER_RESPONSE:
                 ueid = data["ueid"]
                 condition = data["condition"]
                 self.condition_record[ueid].append(condition)
@@ -207,7 +208,7 @@ class Satellite(Base):
                         to=UE_who_requested
                     )
             # ================================================ Target
-            if task == RANDOM_ACCESS:
+            elif task == RANDOM_ACCESS:
                 # Response to UE
                 ueid = data['from']
                 expected_access_time, expected_leaving_time = self.estimated_access_handover_precise_time(ueid)
@@ -240,7 +241,7 @@ class Satellite(Base):
                 # upon receiving random access, the target delete the condition record and take over UE
                 del self.takeover_condition_record[ueid]
             # ================================================ Source
-            if task == HANDOVER_SUCCESS:
+            elif task == HANDOVER_SUCCESS:
                 # send SN status transfer
                 target_id = data['from']
                 target = self.satellites[target_id]
@@ -273,14 +274,21 @@ class Satellite(Base):
                 del self.condition_record[ueid]
 
             # ================================================ Source
-            if task == RRC_RECONFIGURATION_COMPLETE:
+            elif task == RRC_RECONFIGURATION_COMPLETE:
                 # no logic needs to be handled here
                 assert (True)
                 # ================================================ Target
-            if task == SN_STATUS_TRANSFER:
-                assert (True)
+            elif task == SN_STATUS_TRANSFER:
+                data = {
+                    "task": PATH_SWITCH_REQUEST,
+                    "sourceid": data['from']
+                }
+                self.send_message(
+                    msg=data,
+                    to=self.AMF
+                )
             # ================================================ Candidate
-            if task == HANDOVER_CANCEL:
+            elif task == HANDOVER_CANCEL:
                 ueid = data['ueid']
                 expected_access_time, expected_leaving_time = self.estimated_access_handover_precise_time(ueid)
                 # upon receving handover cancel, the candidate remove the UE's record
@@ -288,6 +296,17 @@ class Satellite(Base):
                 self.access_Q.release_resource(ueid)
                 self.decrease_my_load_potential(expected_access_time, SOURCE_HANDOVER_REQUEST_SIGNALLING_COUNT_ON_CANDIDATE)
                 self.decrease_my_load_potential(expected_leaving_time, UE_HANDOVER_SIGNALLING_COUNT_ON_SOURCE)
+            elif task == PATH_SWITCH_REQUEST_ACK:
+                source = self.satellites[data['sourceid']]
+                data = {
+                    "task": UE_CONTEXT_RELEASE,
+                }
+                self.send_message(
+                    msg=data,
+                    to=source
+                )
+            else:
+                assert False
 
     def estimated_access_handover_precise_time(self, ueid):
         serving_time = self.takeover_condition_record[ueid].ue_utility
