@@ -99,7 +99,7 @@ class Satellite(Base):
                         to=target_satellite
                     )
             # ================================================ Target + Candidate
-            if task == HANDOVER_REQUEST:
+            elif task == HANDOVER_REQUEST:
                 source_id = data['from']
                 requested_satellite = self.satellites[source_id]
                 ueid = data['ueid']
@@ -117,7 +117,7 @@ class Satellite(Base):
                 )
                 self.takeover_condition_record[ueid] = condition
             # ================================================ Source
-            if task == HANDOVER_RESPONSE:
+            elif task == HANDOVER_RESPONSE:
                 ueid = data["ueid"]
                 condition = data["condition"]
                 self.condition_record[ueid].append(condition)
@@ -135,7 +135,7 @@ class Satellite(Base):
                         to=UE_who_requested
                     )
             # ================================================ Target
-            if task == RANDOM_ACCESS:
+            elif task == RANDOM_ACCESS:
                 # Response to UE
                 ueid = data['from']
                 assert (self.current_assigned_slot.include(ueid))
@@ -164,7 +164,7 @@ class Satellite(Base):
                 # upon receiving random access, the target delete the condition record and take over UE
                 del self.takeover_condition_record[ueid]
             # ================================================ Source
-            if task == HANDOVER_SUCCESS:
+            elif task == HANDOVER_SUCCESS:
                 # send SN status transfer
                 target_id = data['from']
                 target = self.satellites[target_id]
@@ -195,11 +195,11 @@ class Satellite(Base):
                 del self.condition_record[ueid]
 
             # ================================================ Source
-            if task == RRC_RECONFIGURATION_COMPLETE:
+            elif task == RRC_RECONFIGURATION_COMPLETE:
                 # no logic needs to be handled here
                 assert (True)
                 # ================================================ Target
-            if task == SN_STATUS_TRANSFER:
+            elif task == SN_STATUS_TRANSFER:
                 data = {
                     "task": PATH_SWITCH_REQUEST,
                     "sourceid": data['from']
@@ -209,12 +209,12 @@ class Satellite(Base):
                     to=self.AMF
                 )
             # ================================================ Candidate
-            if task == HANDOVER_CANCEL:
+            elif task == HANDOVER_CANCEL:
                 ueid = data['ueid']
                 # upon receving handover cancel, the candidate remove the UE's record
                 del self.takeover_condition_record[ueid]
                 self.access_Q.release_resource(ueid)
-            if task == PATH_SWITCH_REQUEST_ACK:
+            elif task == PATH_SWITCH_REQUEST_ACK:
                 source = self.satellites[data['sourceid']]
                 data = {
                     "task": UE_CONTEXT_RELEASE,
@@ -223,6 +223,10 @@ class Satellite(Base):
                     msg=data,
                     to=source
                 )
+            elif task == UE_CONTEXT_RELEASE:
+                assert True
+            else:
+                assert False
 
 
     # This is a source satellite function

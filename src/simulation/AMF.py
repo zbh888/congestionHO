@@ -11,7 +11,7 @@ class AMF(Base):
 
 
         Base.__init__(self,
-                      identity=1,
+                      identity=-1,
                       position_x=0,
                       position_y=0,
                       coverage_info=coverage_info,
