@@ -53,7 +53,7 @@ class UE(Base):
                     and self.coverage_info[self.identity, self.serving_satellite.identity, next] == 0):
                 covered_satellites_now = np.where(self.coverage_info[self.identity, :, now] == 1)[0]
                 covered_satellites_future = \
-                np.where(self.coverage_info[self.identity, :, min(now + WINDOW_SIZE, self.DURATION - 1)] == 1)[0]
+                    np.where(self.coverage_info[self.identity, :, min(now + WINDOW_SIZE, self.DURATION - 1)] == 1)[0]
                 candidates = np.intersect1d(covered_satellites_now, covered_satellites_future)
                 assert (len(candidates) >= NUMBER_CANDIDATE)
                 source = self.satellites[self.serving_satellite.identity]

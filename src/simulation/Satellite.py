@@ -42,7 +42,7 @@ class Satellite(Base):
         self.access_Q = Queue(max_access_opportunity, max_access_slots)
         self.current_assigned_slot = None
         self.oracle = oracle
-        self.record_max_delay = 0 # may be removed, recording the largest delay returned, not apply to RANDOM
+        self.record_max_delay = 0  # may be removed, recording the largest delay returned, not apply to RANDOM
         self.reservation_count = 0
 
         # === source function ===
@@ -228,7 +228,6 @@ class Satellite(Base):
             else:
                 assert False
 
-
     # This is a source satellite function
     def decide_best_target(self, ueid):
         conditions = self.condition_record[ueid]
@@ -293,7 +292,6 @@ class Satellite(Base):
         self.access_Q.insert(ueid, delay)
         self.record_max_delay = max(self.record_max_delay, delay)
         return condition
-
 
     # You select three
     def candidates_selection(self, candidates, utilities):

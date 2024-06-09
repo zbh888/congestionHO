@@ -33,10 +33,11 @@ CANDIDATE_RANDOM = "C_RANDOM"
 SOURCE_SELECTION_LONGEST = "SS_LONGEST"
 SOURCE_SELECTION_RANDOM = "SS_RANDOM"
 
-#sys.argv = ['notebook', SOURCE_DECISION_LONGEST, CANDIDATE_RANDOM, SOURCE_SELECTION_LONGEST, '1'] # NOTE THIS WORK IN NOTEBOOK
+# sys.argv = ['notebook', SOURCE_DECISION_LONGEST, CANDIDATE_RANDOM, SOURCE_SELECTION_LONGEST, '1'] # NOTE THIS WORK IN NOTEBOOK
 # Modify this list if you have anything to compare
 SOURCE_DECISION_ALG = sys.argv[1]
 CANDIDATE_ALG = sys.argv[2]
 SOURCE_SELECTION_ALG = sys.argv[3]
 max_access_opportunity = int(sys.argv[4])
-RESULT_PATH = "./result/" + SOURCE_DECISION_ALG + '|' + CANDIDATE_ALG + '|' + SOURCE_SELECTION_ALG + '|' + str(max_access_opportunity) + '.pkl'
+RESULT_PATH = "./result/" + SOURCE_DECISION_ALG + '|' + CANDIDATE_ALG + '|' + SOURCE_SELECTION_ALG + '|' + str(
+    max_access_opportunity) + '.pkl'
