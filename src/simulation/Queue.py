@@ -1,6 +1,7 @@
 from collections import deque
 import numpy as np
 
+
 class slotQueue:
     def __init__(self, time, max_opportunity):
         # The time index indicate that this slot is for that time
@@ -40,6 +41,7 @@ class Queue:
 
     def calulate_reservation_rate(self):
         return self.reserved_number / (self.max_opportunity * self.max_access_slots)
+
     def shift(self):
         # Note this counter is not simulation time
         # simulation time = self.counter - max_access_slots
@@ -47,7 +49,7 @@ class Queue:
         slotQ = slotQueue(self.counter, self.max_opportunity)
         self.slots_status.popleft()
         self.slots_status.append(self.max_opportunity)
-      #  rate = self.calulate_reservation_rate()
+        #  rate = self.calulate_reservation_rate()
         Q = self.Q.popleft()
         temp = self.reserved_number
         self.reserved_number -= Q.length()
@@ -58,7 +60,7 @@ class Queue:
         self.access_issue_time_delay[ueid] = (self.counter - self.max_access_slots, delay)
         self.Q[delay - 1].insert(ueid)
         self.slots_status[delay - 1] -= 1
-        self.reserved_number += 1 # just for reservation count
+        self.reserved_number += 1  # just for reservation count
 
     def available_slots(self):
         return np.array([True if value > 0 else False for value in self.slots_status])
@@ -69,9 +71,8 @@ class Queue:
         if slot >= 0:
             self.Q[slot].delete(ueid)
             self.slots_status[slot] += 1
-            self.reserved_number -= 1 # just for reservation count
+            self.reserved_number -= 1  # just for reservation count
 
     def return_expected_issue_access_time(self, ueid):
-        return self.access_issue_time_delay[ueid][0], self.access_issue_time_delay[ueid][0] + self.access_issue_time_delay[ueid][1]
-
-
+        return self.access_issue_time_delay[ueid][0], self.access_issue_time_delay[ueid][0] + \
+               self.access_issue_time_delay[ueid][1]

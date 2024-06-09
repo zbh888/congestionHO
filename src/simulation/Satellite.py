@@ -43,7 +43,7 @@ class Satellite(Base):
         self.access_Q = Queue(max_access_opportunity, max_access_slots)
         self.current_assigned_slot = None
         self.oracle = oracle
-        self.record_max_delay = 0 # may be removed, recording the largest delay returned, not apply to RANDOM
+        self.record_max_delay = 0  # may be removed, recording the largest delay returned, not apply to RANDOM
         self.reservation_count = 0
 
         # === source function ===
@@ -52,9 +52,9 @@ class Satellite(Base):
         # candidates_record[ueid] stores candidates
         self.candidates_record = {}
 
-        self.load_aware = {} # satid -> (time, (priority, load, potential_load))
-        self.predicted_my_load = [0] * (self.DURATION + 5000) # They know the future
-        self.predicted_my_load_potential = [0] * (self.DURATION + 5000) #So, no one knows the future
+        self.load_aware = {}  # satid -> (time, (priority, load, potential_load))
+        self.predicted_my_load = [0] * (self.DURATION + 5000)  # They know the future
+        self.predicted_my_load_potential = [0] * (self.DURATION + 5000)  # So, no one knows the future
         self.within_one_slot_load_priority = 0
 
         # === target function ===
@@ -72,8 +72,8 @@ class Satellite(Base):
     def prepare_my_load_prediction(self):
 
         return (self.within_one_slot_load_priority,
-                self.predicted_my_load[self.env.now:self.env.now+self.access_Q.max_access_slots + 1],
-                self.predicted_my_load_potential[self.env.now:self.env.now+self.access_Q.max_access_slots + 1])
+                self.predicted_my_load[self.env.now:self.env.now + self.access_Q.max_access_slots + 1],
+                self.predicted_my_load_potential[self.env.now:self.env.now + self.access_Q.max_access_slots + 1])
 
     def prepare_other_load_prediction(self, satid):
         if satid not in self.load_aware:
@@ -86,26 +86,26 @@ class Satellite(Base):
             return (candidate_priority, candidate_load, candidate_load_potential)
 
     def increment_my_load(self, time, amount):
-        #print(f"{self.identity},{self.env.now} [{time}, + {amount}]: real load")
+        # print(f"{self.identity},{self.env.now} [{time}, + {amount}]: real load")
         self.within_one_slot_load_priority += 1
         self.predicted_my_load[time] += amount
 
     def increment_my_load_potential(self, time, amount):
-        #print(f"{self.identity},{self.env.now} [{time}, + {amount}]: potential load")
+        # print(f"{self.identity},{self.env.now} [{time}, + {amount}]: potential load")
         self.within_one_slot_load_priority += 1
         self.predicted_my_load_potential[time] += amount
 
     def decrease_my_load(self, time, amount):
-        #print(f"{self.identity},{self.env.now} [{time}, - {amount}]: real load")
+        # print(f"{self.identity},{self.env.now} [{time}, - {amount}]: real load")
         self.within_one_slot_load_priority += 1
         self.predicted_my_load[time] -= amount
-        assert(self.predicted_my_load[time] >= 0)
+        assert (self.predicted_my_load[time] >= 0)
 
     def decrease_my_load_potential(self, time, amount):
-        #print(f"{self.identity},{self.env.now} [{time}, - {amount}]: potential load")
+        # print(f"{self.identity},{self.env.now} [{time}, - {amount}]: potential load")
         self.within_one_slot_load_priority += 1
         self.predicted_my_load_potential[time] -= amount
-        assert(self.predicted_my_load_potential[time] >= 0)
+        assert (self.predicted_my_load_potential[time] >= 0)
 
     def update_other_priority_load(self, satid, priority_load):
         if satid not in self.load_aware:
@@ -156,7 +156,8 @@ class Satellite(Base):
                         "candidates": candidates,
                         "utility": utilities,
                         "priority_load": self.prepare_my_load_prediction(),
-                        "candidates_priority_load": [self.prepare_other_load_prediction(c_satid) for c_satid in candidates]
+                        "candidates_priority_load": [self.prepare_other_load_prediction(c_satid) for c_satid in
+                                                     candidates]
                     }
                     self.send_message(
                         msg=data,
@@ -181,7 +182,7 @@ class Satellite(Base):
                     "task": HANDOVER_RESPONSE,
                     "ueid": ueid,
                     "condition": condition.toJSON(),
-                    'priority_load' : self.prepare_my_load_prediction(),
+                    'priority_load': self.prepare_my_load_prediction(),
                 }
                 self.send_message(
                     msg=data,
@@ -294,7 +295,8 @@ class Satellite(Base):
                 # upon receving handover cancel, the candidate remove the UE's record
                 del self.takeover_condition_record[ueid]
                 self.access_Q.release_resource(ueid)
-                self.decrease_my_load_potential(expected_access_time, SOURCE_HANDOVER_REQUEST_SIGNALLING_COUNT_ON_CANDIDATE)
+                self.decrease_my_load_potential(expected_access_time,
+                                                SOURCE_HANDOVER_REQUEST_SIGNALLING_COUNT_ON_CANDIDATE)
                 self.decrease_my_load_potential(expected_leaving_time, UE_HANDOVER_SIGNALLING_COUNT_ON_SOURCE)
             elif task == PATH_SWITCH_REQUEST_ACK:
                 source = self.satellites[data['sourceid']]
@@ -326,8 +328,8 @@ class Satellite(Base):
         expected_leaving_time = ue_utility + self.env.now
         condition = Sat_condition(access_delay=delay, ueid=ueid, satid=self.identity, sourceid=sourceid,
                                   ue_utility=ue_utility,
-                                  future_potential_load = self.predicted_my_load_potential[expected_leaving_time],
-                                  future_real_load= self.predicted_my_load[expected_leaving_time])
+                                  future_potential_load=self.predicted_my_load_potential[expected_leaving_time],
+                                  future_real_load=self.predicted_my_load[expected_leaving_time])
         self.access_Q.insert(ueid, delay)
         self.record_max_delay = max(self.record_max_delay, delay)
         return condition
@@ -366,7 +368,7 @@ class Satellite(Base):
         if CANDIDATE_ALG == CANDIDATE_OUR:
             available_slots = self.access_Q.available_slots()
             if True not in available_slots:
-               assert(False)
+                assert (False)
             loads = []
             for candidate_id in candidates:
                 if candidate_id == self.identity:
@@ -408,7 +410,8 @@ class Satellite(Base):
         # This clause if for non-oracle
         else:
             if SOURCE_DECISION_ALG == SOURCE_DECISION_OUR:
-                min_sum = min(c['future_potential_real_load'][0] + c['future_potential_real_load'][1] for c in conditions)
+                min_sum = min(
+                    c['future_potential_real_load'][0] + c['future_potential_real_load'][1] for c in conditions)
                 min_conditions = [c for c in conditions if
                                   c['future_potential_real_load'][0] + c['future_potential_real_load'][1] == min_sum]
                 selected_condition = random.choice(min_conditions)

@@ -38,7 +38,6 @@ class allCounters:
             max_delay.append(self.satellites[satid].record_max_delay)
         self.result['max_delays'] = max_delay
 
-
     def generate_time_sat_matrix(self):
         res = []
         for satid in range(self.N_SAT):

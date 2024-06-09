@@ -9,7 +9,6 @@ class AMF(Base):
                  coverage_info,
                  env):
 
-
         Base.__init__(self,
                       identity=-1,
                       position_x=0,

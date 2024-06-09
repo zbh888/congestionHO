@@ -11,6 +11,7 @@ import scipy.stats as stats
 LEGEND_SIZE = 8
 COLOR = 'tab20'
 
+
 def escape_underscores(setting):
     input_string = "-".join(setting)
     escaped_string = input_string.replace("_", "-")
@@ -40,6 +41,7 @@ def calculate_confidence_interval(data, confidence=0.95):
 
     return mean, margin_of_error
 
+
 def draw_total_load_each_satellite(results):
     print("Are there certain satellites handling much more signalling than others?")
     plt.figure(figsize=(10, 6))
@@ -59,8 +61,10 @@ def draw_total_load_each_satellite(results):
     plt.legend(fontsize=LEGEND_SIZE)
     plt.show()
 
+
 def draw_cumulative_load_each_time(results):
-    print("Given a signalling load, is the method showing that majority of the time slots are under the expected threshold?")
+    print(
+        "Given a signalling load, is the method showing that majority of the time slots are under the expected threshold?")
     plt.figure(figsize=(10, 6))
     cmap = colormaps.get_cmap(COLOR)
     colors = [cmap(i) for i in range(len(results))]
@@ -73,13 +77,14 @@ def draw_cumulative_load_each_time(results):
         num_bins = 50
         counts, bin_edges = np.histogram(x, bins=num_bins, density=True)
         cdf = np.cumsum(counts * np.diff(bin_edges))
-        plt.plot(bin_edges[1:], cdf, marker='none', linestyle='-', color=colors[idx], linewidth=1, label = legend)
+        plt.plot(bin_edges[1:], cdf, marker='none', linestyle='-', color=colors[idx], linewidth=1, label=legend)
     plt.xlabel('Signalling load each slot')
     plt.ylabel('Probability')
     plt.title('Cumulative plot for signalling load each slot')
     plt.grid(True)
     plt.legend(fontsize=LEGEND_SIZE)
     plt.show()
+
 
 def draw_busy_hour_distribution(results):
     print("Are there certain satellites handling majority of the busy (top 25%) signalling slots? ")
@@ -102,6 +107,7 @@ def draw_busy_hour_distribution(results):
     plt.legend(fontsize=LEGEND_SIZE)
     plt.show()
 
+
 def draw_heatmap(results, interval):
     intermediate_res = {}
     maximum = 0
@@ -123,10 +129,12 @@ def draw_heatmap(results, interval):
     if len(intermediate_res) == 1:
         axes = [axes]  # Ensure axes is a list if only one subplot
     for ax, (legend, data) in zip(axes, intermediate_res.items()):
-        sns.heatmap(data, ax=ax, vmin=minimum, vmax=maximum, cbar=False, cmap="YlGnBu", xticklabels=False, yticklabels=False)
+        sns.heatmap(data, ax=ax, vmin=minimum, vmax=maximum, cbar=False, cmap="YlGnBu", xticklabels=False,
+                    yticklabels=False)
         ax.set_title(legend)
     plt.tight_layout()
     plt.show()
+
 
 def draw_max_access_slot(results):
     plt.figure(figsize=(10, 6))
@@ -144,6 +152,7 @@ def draw_max_access_slot(results):
     plt.grid(True)
     plt.legend(fontsize=LEGEND_SIZE)
     plt.show()
+
 
 def draw_max_signalling(results):
     print("Are there certain satellites experiencing higher signalling peaks than others?")
@@ -164,6 +173,7 @@ def draw_max_signalling(results):
     plt.legend(fontsize=LEGEND_SIZE)
     plt.show()
 
+
 def draw_max_reservation(results):
     print("Are certain satellites experienced a much higher maximum reservation rate than others?")
     plt.figure(figsize=(10, 6))
@@ -182,15 +192,18 @@ def draw_max_reservation(results):
     plt.legend(fontsize=LEGEND_SIZE)
     plt.show()
 
+
 def main_objective_compute_max_signalling(result):
     time_sat_matrix = result['time_sat_matrix']
     maximum_signalling = np.max(time_sat_matrix)
     return maximum_signalling
 
+
 def side_effect_compute_total_siganlling(result):
     time_sat_matrix = result['time_sat_matrix']
     total_signalling = np.sum(time_sat_matrix)
     return total_signalling
+
 
 def side_effect_compute_busy_time_balance_cv(result, cutoff_percent):
     time_sat_matrix = result['time_sat_matrix']
@@ -202,9 +215,10 @@ def side_effect_compute_busy_time_balance_cv(result, cutoff_percent):
     mask = time_sat_matrix >= cutoff
     count_greater_than_cutoff = np.sum(mask, axis=1)
     count_greater_than_cutoff_percent = count_greater_than_cutoff / np.sum(count_greater_than_cutoff)
-    sorted_data = np.sort(count_greater_than_cutoff_percent)[len(count_greater_than_cutoff_percent)//2:]
+    sorted_data = np.sort(count_greater_than_cutoff_percent)[len(count_greater_than_cutoff_percent) // 2:]
     cv = coefficient_of_variation(sorted_data)
     return cv
+
 
 def side_effect_compute_busy_time_confidence(result, cutoff_percent):
     time_sat_matrix = result['time_sat_matrix']
@@ -216,9 +230,11 @@ def side_effect_compute_busy_time_confidence(result, cutoff_percent):
     mean, margin_of_error = calculate_confidence_interval(busy_time_signalling_count, 0.95)
     return mean, margin_of_error
 
+
 def side_effect_compute_total_reservation(result):
     reservation_list = result['reservation_count']
     return np.sum(reservation_list)
+
 
 def side_effect_compute_reservation_cv(result):
     reservation_list = result['reservation_count']
@@ -226,12 +242,14 @@ def side_effect_compute_reservation_cv(result):
     cv = coefficient_of_variation(sorted_data)
     return cv
 
+
 def side_effect_compute_UE_access_mean(result):
     total_access = []
     UE_access_list = result['ue_delay_history']
     for list in UE_access_list:
         total_access += list
     return np.mean(total_access)
+
 
 def side_effect_compute_UE_access_cv(result):
     total_access = []
@@ -241,11 +259,13 @@ def side_effect_compute_UE_access_cv(result):
     cv = coefficient_of_variation(total_access)
     return cv
 
+
 def prepare_result(results, filter_flag, filter_threshold):
     busy_percent = 0.2
     file_path = "aggregated_result.txt"
     with open(file_path, "w") as file:
-        file.write("S_ALG,C_ALG,UE_ALG,ACC_OPPORTUNITIES,MAX_SIGNALLING,TOTAL_SIGNALLING,BUSY_CV,BUSY_SIG_MEAN,BUSY_SIG_MARGIN,TOTAL_RESERVE,RESERVE_CV,DELAY_MEAN,DELAY_CV\n")
+        file.write(
+            "S_ALG,C_ALG,UE_ALG,ACC_OPPORTUNITIES,MAX_SIGNALLING,TOTAL_SIGNALLING,BUSY_CV,BUSY_SIG_MEAN,BUSY_SIG_MARGIN,TOTAL_RESERVE,RESERVE_CV,DELAY_MEAN,DELAY_CV\n")
     data = []
     for setting in results:
         res = results[setting]
@@ -300,6 +320,7 @@ def prepare_result(results, filter_flag, filter_threshold):
     else:
         return results
 
+
 def draw_prepared_result(results):
     text_size = 6
     cmap = colormaps.get_cmap(COLOR)
@@ -323,7 +344,7 @@ def draw_prepared_result(results):
         res = results[element[1]]
         sorted_data.append(res['maximum_signalling'])
     plt.figure(figsize=(3, 2))
-    plt.bar(sorted_labels[:len(sorted_data)], sorted_data, color = 'skyblue', edgecolor='black')
+    plt.bar(sorted_labels[:len(sorted_data)], sorted_data, color='skyblue', edgecolor='black')
     plt.title('Maximum signalling')
     plt.ylabel('Signalling count')
     plt.grid(True)
