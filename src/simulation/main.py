@@ -40,8 +40,6 @@ def monitor_timestamp(env):
 
 
 if __name__ == "__main__":
-    SOURCE_ALG = sys.argv[1]
-    CANDIDATE_ALG = sys.argv[2]
     # configuration
     # When oracle_simulation is False, the oracle_assignment could be True/False
     # When oracle_simulation is True, the oracle_assignment must be True
