@@ -2,6 +2,7 @@ import sys
 from Load import *
 from UE import *
 from Satellite import *
+from AMF import *
 from Oracle import *
 import time
 import os
@@ -70,6 +71,7 @@ if __name__ == "__main__":
         else:
             print("ERROR")
 
+    amf = AMF(coverage_info=C, env=env)
     Satellites = {}
     for sat_template in satellites_template:
         ID = sat_template.ID
@@ -89,8 +91,10 @@ if __name__ == "__main__":
                 env=env,
                 oracle=simulation_oracle,
             )
+            Satellites[ID].AMF = amf
         else:
             print("ERROR")
+    amf.satellites = Satellites
 
     for ueid in UEs:
         UEs[ueid].satellites = Satellites

@@ -33,6 +33,7 @@ class Satellite(Base):
                       object_type="Satellite")
 
         self.coverage_r = coverage_r
+        self.AMF = None
         self.height = height
         self.velocity = velocity
         self.sind = sind
@@ -199,13 +200,30 @@ class Satellite(Base):
                 assert (True)
                 # ================================================ Target
             if task == SN_STATUS_TRANSFER:
-                assert (True)
+                data = {
+                    "task": HANDOVER_CANCEL,
+                    "sourceid": data['from']
+                }
+                self.send_message(
+                    msg=data,
+                    to=self.AMF
+                )
             # ================================================ Candidate
             if task == HANDOVER_CANCEL:
                 ueid = data['ueid']
                 # upon receving handover cancel, the candidate remove the UE's record
                 del self.takeover_condition_record[ueid]
                 self.access_Q.release_resource(ueid)
+            if task == PATH_SWITCH_REQUEST_ACK:
+                source = self.satellites[data['sourceid']]
+                data = {
+                    "task": UE_CONTEXT_RELEASE,
+                }
+                self.send_message(
+                    msg=data,
+                    to=source
+                )
+
 
     # This is a source satellite function
     def decide_best_target(self, ueid):
