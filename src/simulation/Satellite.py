@@ -201,7 +201,7 @@ class Satellite(Base):
                 # ================================================ Target
             if task == SN_STATUS_TRANSFER:
                 data = {
-                    "task": HANDOVER_CANCEL,
+                    "task": PATH_SWITCH_REQUEST,
                     "sourceid": data['from']
                 }
                 self.send_message(

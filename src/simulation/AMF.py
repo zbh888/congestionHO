@@ -44,4 +44,5 @@ class AMF(Base):
                     to=satellite
                 )
             else:
+                print(task)
                 assert False
