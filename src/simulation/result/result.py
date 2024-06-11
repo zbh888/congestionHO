@@ -196,6 +196,9 @@ def draw_max_reservation(results):
 def main_objective_compute_max_signalling(result):
     time_sat_matrix = result['time_sat_matrix']
     maximum_signalling = np.max(time_sat_matrix)
+    max_index = np.where(time_sat_matrix == maximum_signalling)
+    max_index_tuple = list(zip(max_index[0], max_index[1]))
+    print(f"Maximum signalling value: {maximum_signalling} at index {max_index_tuple}")
     return maximum_signalling
 
 
