@@ -4,15 +4,16 @@ import numpy as np
 
 class Oracle:
     def __init__(self):
-        with open('../optimizer/bho.pkl', 'rb') as inp:
+        with open('../optimizer/cho.pkl', 'rb') as inp:
             self.d = pickle.load(inp)
         self.N_UE = len(self.d["C"])
         self.N_SAT = len(self.d["C"][0])
         self.N_TIME = self.d["N_TIME"]
+        self.x = self.d['x']
         self.h = self.d['h']
         self.o2i = self.d["o2i"]
         self.satellite_sequence = {}
-        for ueid in range(self.N_UE):
+        for ueid in range(200):
             self.satellite_sequence[ueid] = []
             servingsat_time_array = np.array(self.h[ueid])
             for t in range(servingsat_time_array.shape[1]):
@@ -22,6 +23,20 @@ class Oracle:
                             self.satellite_sequence[ueid].append(satid)
                         elif self.satellite_sequence[ueid][-1] != satid:
                             self.satellite_sequence[ueid].append(satid)
+        satellite_sequence = {}
+        for ueid in range(self.N_UE):
+            satellite_sequence[ueid] = []
+            servingsat_time_array = np.array(self.x[ueid])
+            for t in range(servingsat_time_array.shape[1]):
+                for satid in range(servingsat_time_array.shape[0]):
+                    if self.x[ueid][satid][t] == 1:
+                        if len(satellite_sequence[ueid]) == 0:
+                            satellite_sequence[ueid].append(satid)
+                        elif satellite_sequence[ueid][-1] != satid:
+                            satellite_sequence[ueid].append(satid)
+        for ueid in range(self.N_UE):
+            self.satellite_sequence[ueid].insert(0, satellite_sequence[ueid][0])
+
 
     def query_next_satellite(self, ueid, serving_satellite_id):
         array = self.satellite_sequence[ueid]
