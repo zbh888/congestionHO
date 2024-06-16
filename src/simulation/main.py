@@ -53,7 +53,7 @@ if __name__ == "__main__":
     DURATION = C.shape[2]
     env = simpy.Environment()
 
-    assignment_oracle = None
+    oracle_assignment = None
     simulation_oracle = None
     if oracle_assignment:
         assignment_oracle = Oracle()
