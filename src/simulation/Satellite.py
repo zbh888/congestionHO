@@ -85,6 +85,21 @@ class Satellite(Base):
             candidate_load_potential = self.load_aware[satid][1][2][self.env.now - candidate_time:]
             return (candidate_priority, candidate_load, candidate_load_potential)
 
+    # def prepare_my_current_load(self):
+    #     return self.predicted_my_load[self.env.now] + self.predicted_my_load_potential[self.env.now]
+
+    def prepare_other_current_load(self, satid):
+        if satid not in self.load_aware:
+            return 0
+        else:
+            candidate_time = self.load_aware[satid][0]
+            candidate_load = self.load_aware[satid][1][1][self.env.now - candidate_time:]
+            candidate_load_potential = self.load_aware[satid][1][2][self.env.now - candidate_time:]
+            if len(candidate_load) == 0:
+                return 0
+            else:
+                return candidate_load[0] + candidate_load_potential[0]
+
     def increment_my_load(self, time, amount):
         # print(f"{self.identity},{self.env.now} [{time}, + {amount}]: real load")
         self.within_one_slot_load_priority += 1
@@ -174,8 +189,13 @@ class Satellite(Base):
                 for candidate_id, candidate_priority_load in zip(candidates, candidates_priority_loads):
                     self.update_other_priority_load(candidate_id, candidate_priority_load)
                 condition = self.prepare_condition(ueid, source_id, candidates, utilities)
+                # This is unexpected but already happened
+                self.increment_my_load(self.env.now, 1)
+                # This is unexpected, not yet happen
+                # Just in case the UE access, then target will have these signalling
                 self.increment_my_load_potential(self.env.now + condition.access_delay,
                                                  SOURCE_HANDOVER_REQUEST_SIGNALLING_COUNT_ON_CANDIDATE)
+                # Just in case the UE access, then target will source and have these signalling in the very future
                 self.increment_my_load_potential(self.env.now + condition.ue_utility,
                                                  UE_HANDOVER_SIGNALLING_COUNT_ON_SOURCE)
                 data = {
@@ -213,8 +233,13 @@ class Satellite(Base):
                 # Response to UE
                 ueid = data['from']
                 expected_access_time, expected_leaving_time = self.estimated_access_handover_precise_time(ueid)
+                #self.increment_my_load(self.env.now, 1)
                 self.increment_my_load(expected_leaving_time, UE_HANDOVER_SIGNALLING_COUNT_ON_SOURCE)
                 self.decrease_my_load_potential(expected_leaving_time, UE_HANDOVER_SIGNALLING_COUNT_ON_SOURCE)
+                self.increment_my_load_potential(self.env.now,
+                                                SOURCE_HANDOVER_REQUEST_SIGNALLING_COUNT_ON_CANDIDATE)
+                self.decrease_my_load_potential(self.env.now,
+                                                 SOURCE_HANDOVER_REQUEST_SIGNALLING_COUNT_ON_CANDIDATE)
                 assert (self.current_assigned_slot.include(ueid))
                 assert (self.current_assigned_slot.time == self.env.now)
                 takeover_condition = self.takeover_condition_record[ueid]
@@ -295,6 +320,7 @@ class Satellite(Base):
                 # upon receving handover cancel, the candidate remove the UE's record
                 del self.takeover_condition_record[ueid]
                 self.access_Q.release_resource(ueid)
+                self.increment_my_load(self.env.now, 1)
                 self.decrease_my_load_potential(expected_access_time,
                                                 SOURCE_HANDOVER_REQUEST_SIGNALLING_COUNT_ON_CANDIDATE)
                 self.decrease_my_load_potential(expected_leaving_time, UE_HANDOVER_SIGNALLING_COUNT_ON_SOURCE)
@@ -367,7 +393,12 @@ class Satellite(Base):
             selected_candidates = sorted_candidates[:NUMBER_CANDIDATE]
             selected_utilities = sorted_utilities[:NUMBER_CANDIDATE]
         elif SOURCE_SELECTION_ALG == SOURCE_SELECTION_OUR:
-            pass
+            # TODO randomness
+            results = [(candidate, utility, self.prepare_other_current_load(candidate)) for candidate, utility in zipped_lists]
+            sorted_results = sorted(results, key=lambda x: x[2])
+            smallest_3_results = sorted_results[:NUMBER_CANDIDATE]
+            smallest_3_zipped = [(candidate, utility) for candidate, utility, _ in smallest_3_results]
+            selected_candidates, selected_utilities = zip(*smallest_3_zipped)
         return selected_candidates, selected_utilities
 
     def decide_delay(self, ueid, sourceid, candidates, utilities):
