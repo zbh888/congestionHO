@@ -397,7 +397,17 @@ class Satellite(Base):
             results = [(candidate, utility, self.prepare_other_current_load(candidate)) for candidate, utility in zipped_lists]
             sorted_results = sorted(results, key=lambda x: x[2])
             smallest_3_results = sorted_results[:NUMBER_CANDIDATE]
-            smallest_3_zipped = [(candidate, utility) for candidate, utility, _ in smallest_3_results]
+            biggest_value = smallest_3_results[NUMBER_CANDIDATE - 1][2]
+            final = []
+            for x in smallest_3_results:
+                if x[2] != biggest_value:
+                    final.append(x)
+            potential_list = []
+            for y in sorted_results:
+                if y[2] == biggest_value:
+                    potential_list.append(y)
+            final = final + random.sample(potential_list, NUMBER_CANDIDATE - len(final))
+            smallest_3_zipped = [(candidate, utility) for candidate, utility, _ in final]
             selected_candidates, selected_utilities = zip(*smallest_3_zipped)
         return selected_candidates, selected_utilities
 
