@@ -43,8 +43,6 @@ if __name__ == "__main__":
     # configuration
     # When oracle_simulation is False, the oracle_assignment could be True/False
     # When oracle_simulation is True, the oracle_assignment must be True
-    if oracle_simulation:
-        assert (oracle_assignment)
     random.seed(10)
 
     # Loading scenarios
@@ -55,6 +53,7 @@ if __name__ == "__main__":
 
     oracle_assignment = None
     simulation_oracle = None
+    assignment_oracle = None
     if oracle_assignment:
         assignment_oracle = Oracle()
     if oracle_simulation:

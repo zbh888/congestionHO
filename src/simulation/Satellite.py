@@ -334,11 +334,25 @@ class Satellite(Base):
         self.record_max_delay = max(self.record_max_delay, delay)
         return condition
 
-    def extend_array(self, arry, length, padding_value):
+    # def extend_array(self, arry, length, padding_value):
+    #     current_length = len(arry)
+    #     assert (current_length <= length)
+    #     if current_length < length:
+    #         return np.pad(arry, (0, length - current_length), 'constant', constant_values=(padding_value,))
+    #     else:
+    #         return arry
+
+    def extend_array(self, arry, length):
         current_length = len(arry)
-        assert (current_length <= length)
-        if current_length < length:
-            return np.pad(arry, (0, length - current_length), 'constant', constant_values=(padding_value,))
+        assert current_length <= length, "The desired length must be greater than or equal to the current length."
+        if current_length == 0:
+            return np.zeros(length)
+        elif current_length < length:
+            # Generate padding values based on the distribution of the existing array values
+            padding_length = length - current_length
+            padding_values = np.random.choice(arry, size=padding_length)
+            extended_array = np.concatenate((arry, padding_values))
+            return extended_array
         else:
             return arry
 
@@ -382,8 +396,7 @@ class Satellite(Base):
                     other_real_load = np.array(otherload[1])[1:]
                     other_potential_load = np.array(otherload[2])[1:]
                     otherload = other_real_load + other_potential_load
-                    padding_value = 0
-                    otherload = self.extend_array(otherload, len(available_slots), padding_value)
+                    otherload = self.extend_array(otherload, len(available_slots))
                     loads.append(otherload)
             loads = np.array(loads)
             valid_indices = np.where(available_slots)[0]
