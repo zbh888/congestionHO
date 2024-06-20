@@ -236,7 +236,7 @@ class Satellite(Base):
                 #self.increment_my_load(self.env.now, 1)
                 self.increment_my_load(expected_leaving_time, UE_HANDOVER_SIGNALLING_COUNT_ON_SOURCE)
                 self.decrease_my_load_potential(expected_leaving_time, UE_HANDOVER_SIGNALLING_COUNT_ON_SOURCE)
-                self.increment_my_load_potential(self.env.now,
+                self.increment_my_load(self.env.now,
                                                 SOURCE_HANDOVER_REQUEST_SIGNALLING_COUNT_ON_CANDIDATE)
                 self.decrease_my_load_potential(self.env.now,
                                                  SOURCE_HANDOVER_REQUEST_SIGNALLING_COUNT_ON_CANDIDATE)
