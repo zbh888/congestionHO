@@ -53,6 +53,7 @@ class Satellite(Base):
         self.candidates_record = {}
 
         self.load_aware = {}  # satid -> (time, (priority, load, potential_load))
+        self.current_unexpected_signalling_count = {} #satid -> int
         self.predicted_my_load = [0] * (self.DURATION + 5000)  # They know the future
         self.predicted_my_load_potential = [0] * (self.DURATION + 5000)  # So, no one knows the future
         self.within_one_slot_load_priority = 0
@@ -69,6 +70,21 @@ class Satellite(Base):
         self.env.process(self.handle_messages())
 
     # ====== Satellite functions ======
+    def clear_all_unexpected_signalling_count(self):
+        self.current_unexpected_signalling_count = {}
+    def clear_unexpected_siganlling_count(self,satid):
+        self.current_unexpected_signalling_count[satid] = 0
+    def unexpected_signalling_count_value(self, satid):
+        if satid not in self.current_unexpected_signalling_count:
+            return 0
+        else:
+            return self.current_unexpected_signalling_count[satid]
+
+    def increment_unexpected_signalling_count_BY1(self, satid):
+        if satid not in self.current_unexpected_signalling_count:
+            self.current_unexpected_signalling_count[satid] = 1
+        else:
+            self.current_unexpected_signalling_count[satid] += 1
     def prepare_my_load_prediction(self):
 
         return (self.within_one_slot_load_priority,
@@ -89,21 +105,28 @@ class Satellite(Base):
     #     return self.predicted_my_load[self.env.now] + self.predicted_my_load_potential[self.env.now]
 
     def prepare_other_current_load(self, satid):
+        maybe_unupdated_signalling = self.unexpected_signalling_count_value(satid)
         if satid not in self.load_aware:
-            return 0
+            return 0 + maybe_unupdated_signalling
         else:
             candidate_time = self.load_aware[satid][0]
             candidate_load = self.load_aware[satid][1][1][self.env.now - candidate_time:]
             candidate_load_potential = self.load_aware[satid][1][2][self.env.now - candidate_time:]
             if len(candidate_load) == 0:
-                return 0
+                return 0 + maybe_unupdated_signalling
             else:
-                return candidate_load[0] + candidate_load_potential[0]
+                return candidate_load[0] + candidate_load_potential[0] + maybe_unupdated_signalling
 
     def increment_my_load(self, time, amount):
         # print(f"{self.identity},{self.env.now} [{time}, + {amount}]: real load")
         self.within_one_slot_load_priority += 1
         self.predicted_my_load[time] += amount
+
+    # This function is for real-time control, because the sender may not get the response immediately
+    # TODO It seems to be useless to update future load in the sender side.
+    def increment_other_cur_load(self, amount):
+        # print(f"{self.identity},{self.env.now} [{time}, + {amount}]: real load")
+        self.predicted_my_load[self.env.now] += amount
 
     def increment_my_load_potential(self, time, amount):
         # print(f"{self.identity},{self.env.now} [{time}, + {amount}]: potential load")
@@ -125,6 +148,7 @@ class Satellite(Base):
     def update_other_priority_load(self, satid, priority_load):
         if satid not in self.load_aware:
             self.load_aware[satid] = (self.env.now, priority_load)
+            self.clear_unexpected_siganlling_count(satid)
         else:
             old_priority_load = self.prepare_other_load_prediction(satid)
             old_priority = old_priority_load[0]
@@ -134,8 +158,10 @@ class Satellite(Base):
             if new_load_length == old_load_length:
                 if new_priority > old_priority:
                     self.load_aware[satid] = (self.env.now, priority_load)
+                    self.clear_unexpected_siganlling_count(satid)
             elif new_load_length > old_load_length:
                 self.load_aware[satid] = (self.env.now, priority_load)
+                self.clear_unexpected_siganlling_count(satid)
 
     def action_monitor(self):
         while True:
@@ -143,6 +169,7 @@ class Satellite(Base):
             self.current_assigned_slot, reservation_count = self.access_Q.shift()
             self.reservation_count += reservation_count
             self.within_one_slot_load_priority = 0
+            self.clear_all_unexpected_signalling_count()
 
     def handle_messages(self):
         while True:
@@ -174,6 +201,7 @@ class Satellite(Base):
                         "candidates_priority_load": [self.prepare_other_load_prediction(c_satid) for c_satid in
                                                      candidates]
                     }
+                    self.increment_unexpected_signalling_count_BY1(satid)
                     self.send_message(
                         msg=data,
                         to=target_satellite
@@ -233,7 +261,6 @@ class Satellite(Base):
                 # Response to UE
                 ueid = data['from']
                 expected_access_time, expected_leaving_time = self.estimated_access_handover_precise_time(ueid)
-                #self.increment_my_load(self.env.now, 1)
                 self.increment_my_load(expected_leaving_time, UE_HANDOVER_SIGNALLING_COUNT_ON_SOURCE)
                 self.decrease_my_load_potential(expected_leaving_time, UE_HANDOVER_SIGNALLING_COUNT_ON_SOURCE)
                 self.increment_my_load(self.env.now,
@@ -285,6 +312,7 @@ class Satellite(Base):
                 # cancel other candidates
                 for candidateid in self.candidates_record[ueid]:
                     if candidateid != target_id:
+                        self.increment_unexpected_signalling_count_BY1(candidateid)
                         candidate = self.satellites[candidateid]
                         data = {
                             "task": HANDOVER_CANCEL,
@@ -393,7 +421,6 @@ class Satellite(Base):
             selected_candidates = sorted_candidates[:NUMBER_CANDIDATE]
             selected_utilities = sorted_utilities[:NUMBER_CANDIDATE]
         elif SOURCE_SELECTION_ALG == SOURCE_SELECTION_OUR:
-            # TODO randomness
             results = [(candidate, utility, self.prepare_other_current_load(candidate)) for candidate, utility in zipped_lists]
             sorted_results = sorted(results, key=lambda x: x[2])
             smallest_3_results = sorted_results[:NUMBER_CANDIDATE]
