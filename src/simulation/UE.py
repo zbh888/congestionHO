@@ -168,6 +168,6 @@ class UE(Base):
         # The returned value means from the current time + {return}, it will perform handover.
         x, = np.where(self.coverage_info[self.identity, satid, self.env.now:] == 0)
         if len(x) == 0:
-            return random.randint(4000, 6000)
+            return random.randint(4000, 4500)
         else:
             return int(x[0] - 1)
