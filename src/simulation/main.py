@@ -51,6 +51,7 @@ if __name__ == "__main__":
 
     oracle_assignment = None
     simulation_oracle = None
+    assignment_oracle = None
     if oracle_assignment:
         assignment_oracle = Oracle()
     if oracle_simulation:
