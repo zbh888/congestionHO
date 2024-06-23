@@ -6,10 +6,10 @@
 #Max_ACC=('4')
 
 # Define the arrays
-SS_ALG=('SS_RANDOM' 'SS_LONGEST')
+SS_ALG=('SS_OUR')
 C_ALG=('C_OUR')
 SD_ALG=('SD_OUR')
-Max_ACC=('4')
+Max_ACC=('56')
 
 #SD_ALG=('SD_LONGEST')
 #C_ALG=('C_RANDOM')

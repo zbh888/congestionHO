@@ -115,7 +115,7 @@ class Satellite(Base):
             if len(candidate_load) == 0:
                 return 0 + maybe_unupdated_signalling
             else:
-                return candidate_load[0] + candidate_load_potential[0] + maybe_unupdated_signalling
+                return candidate_load[0] + PERCENT * candidate_load_potential[0] + maybe_unupdated_signalling
 
     def increment_my_load(self, time, amount):
         # print(f"{self.identity},{self.env.now} [{time}, + {amount}]: real load")
@@ -457,13 +457,13 @@ class Satellite(Base):
                     myload = self.prepare_my_load_prediction()
                     my_real_load = np.array(myload[1])[1:]
                     my_potential_load = np.array(myload[2])[1:]
-                    myload = my_real_load + my_potential_load
+                    myload = my_real_load + PERCENT * my_potential_load
                     loads.append(myload)
                 else:
                     otherload = self.prepare_other_load_prediction(candidate_id)
                     other_real_load = np.array(otherload[1])[1:]
                     other_potential_load = np.array(otherload[2])[1:]
-                    otherload = other_real_load + other_potential_load
+                    otherload = other_real_load + PERCENT * other_potential_load
                     otherload = self.extend_array(otherload, len(available_slots))
                     loads.append(otherload)
             loads = np.array(loads)
@@ -492,9 +492,9 @@ class Satellite(Base):
         else:
             if SOURCE_DECISION_ALG == SOURCE_DECISION_OUR:
                 min_sum = min(
-                    c['future_potential_real_load'][0] + c['future_potential_real_load'][1] for c in conditions)
+                    PERCENT*c['future_potential_real_load'][0] + c['future_potential_real_load'][1] for c in conditions)
                 min_conditions = [c for c in conditions if
-                                  c['future_potential_real_load'][0] + c['future_potential_real_load'][1] == min_sum]
+                                  PERCENT*c['future_potential_real_load'][0] + c['future_potential_real_load'][1] == min_sum]
                 selected_condition = random.choice(min_conditions)
             targetid = selected_condition['satid']
             delay = selected_condition['access_delay']
