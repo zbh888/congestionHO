@@ -44,6 +44,7 @@ if __name__ == "__main__":
     # When oracle_simulation is False, the oracle_assignment could be True/False
     # When oracle_simulation is True, the oracle_assignment must be True
     random.seed(10)
+    np.random.seed(10)
 
     # Loading scenarios
     beginning = time.time()

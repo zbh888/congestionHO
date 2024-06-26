@@ -88,8 +88,8 @@ class Satellite(Base):
     def prepare_my_load_prediction(self):
 
         return (self.within_one_slot_load_priority,
-                self.predicted_my_load[self.env.now:self.env.now + self.access_Q.max_access_slots + 1],
-                self.predicted_my_load_potential[self.env.now:self.env.now + self.access_Q.max_access_slots + 1])
+                self.predicted_my_load[self.env.now:self.env.now + LOAD_WINDOW_SIZE],
+                self.predicted_my_load_potential[self.env.now:self.env.now + LOAD_WINDOW_SIZE])
 
     def prepare_other_load_prediction(self, satid):
         if satid not in self.load_aware:
@@ -398,7 +398,7 @@ class Satellite(Base):
 
     def extend_array(self, arry, length):
         current_length = len(arry)
-        assert current_length <= length, "The desired length must be greater than or equal to the current length."
+        #assert current_length <= length, "The desired length must be greater than or equal to the current length."
         if current_length == 0:
             return np.zeros(length)
         elif current_length < length:
@@ -467,6 +467,7 @@ class Satellite(Base):
                     print(f"[{candidate_id}] real:{my_real_load}")
                     print(f"[{candidate_id}] fake:{my_potential_load}")
                     myload = my_real_load + PERCENT * my_potential_load
+                    myload = myload[:len(available_slots)]
                     print(f"[{candidate_id}] toge:{myload}")
                     loads.append(myload)
                 else:
@@ -477,6 +478,7 @@ class Satellite(Base):
                     print(f"[{candidate_id}] fake:{other_potential_load}")
                     otherload = other_real_load + PERCENT * other_potential_load
                     otherload = self.extend_array(otherload, len(available_slots))
+                    otherload = otherload[:len(available_slots)]
                     print(f"[{candidate_id}] toge:{otherload}")
                     loads.append(otherload)
             loads = np.array(loads)
