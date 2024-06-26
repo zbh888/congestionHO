@@ -448,7 +448,11 @@ class Satellite(Base):
         #     # random
         #     delay = random.choice(available_slots) + 1
         if CANDIDATE_ALG == CANDIDATE_OUR:
+            np.set_printoptions(linewidth=np.inf)
+            print(f"{self.env.now} ############################")
+            print(f"satellite identity: {self.identity}")
             available_slots = self.access_Q.available_slots()
+            print(available_slots)
             if True not in available_slots:
                 assert (False)
             loads = []
@@ -457,14 +461,20 @@ class Satellite(Base):
                     myload = self.prepare_my_load_prediction()
                     my_real_load = np.array(myload[1])[1:]
                     my_potential_load = np.array(myload[2])[1:]
+                    print(f"[{candidate_id}] real:{my_real_load}")
+                    print(f"[{candidate_id}] fake:{my_potential_load}")
                     myload = my_real_load + PERCENT * my_potential_load
+                    print(f"[{candidate_id}] toge:{myload}")
                     loads.append(myload)
                 else:
                     otherload = self.prepare_other_load_prediction(candidate_id)
                     other_real_load = np.array(otherload[1])[1:]
                     other_potential_load = np.array(otherload[2])[1:]
+                    print(f"[{candidate_id}] real:{other_real_load}")
+                    print(f"[{candidate_id}] fake:{other_potential_load}")
                     otherload = other_real_load + PERCENT * other_potential_load
                     otherload = self.extend_array(otherload, len(available_slots))
+                    print(f"[{candidate_id}] toge:{otherload}")
                     loads.append(otherload)
             loads = np.array(loads)
             valid_indices = np.where(available_slots)[0]
@@ -472,6 +482,8 @@ class Satellite(Base):
             max_values = np.max(A_valid, axis=0)
             min_index_in_max_values = np.argmin(max_values)
             delay = valid_indices[min_index_in_max_values] + 1
+            print(f"delay: {delay}")
+            print("############################")
         return int(delay)
 
     def decide_best_target(self, ueid):
