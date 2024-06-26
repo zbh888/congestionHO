@@ -404,7 +404,10 @@ class Satellite(Base):
         elif current_length < length:
             # Generate padding values based on the distribution of the existing array values
             padding_length = length - current_length
-            padding_values = np.random.choice(arry, size=padding_length)
+            min_val = np.min(arry)
+            max_val = np.max(arry)
+            padding_values = np.random.uniform(min_val, max_val, size=padding_length)
+            #padding_values = np.random.choice(arry, size=padding_length)
             extended_array = np.concatenate((arry, padding_values))
             return extended_array
         else:
@@ -480,8 +483,10 @@ class Satellite(Base):
             valid_indices = np.where(available_slots)[0]
             A_valid = loads[:, valid_indices]
             max_values = np.max(A_valid, axis=0)
-            min_index_in_max_values = np.argmin(max_values)
-            delay = valid_indices[min_index_in_max_values] + 1
+            min_value = np.min(max_values)
+            min_indices = np.where(max_values == min_value)[0]
+            random_min_index = np.random.choice(min_indices)
+            delay = valid_indices[random_min_index] + 1
             print(f"delay: {delay}")
             print("############################")
         return int(delay)
