@@ -484,7 +484,7 @@ class Satellite(Base):
             A_valid = loads[:, valid_indices]
             max_values = np.max(A_valid, axis=0)
             min_value = np.min(max_values)
-            min_indices = np.where(max_values == min_value)[0]
+            min_indices = np.where(np.isclose(max_values, min_value))[0]
             print(f"available slots: {min_indices}")
             weights = np.arange(len(min_indices), 0, -1) ** BIAS_FACTOR
             weights = weights / np.sum(weights)
