@@ -452,7 +452,7 @@ class Satellite(Base):
         #     delay = random.choice(available_slots) + 1
         if CANDIDATE_ALG == CANDIDATE_OUR:
             np.set_printoptions(linewidth=np.inf)
-            print(f"{self.env.now} ############################")
+            #print(f"{self.env.now} ############################")
             print(f"satellite identity: {self.identity}")
             available_slots = self.access_Q.available_slots()
             print(available_slots)
@@ -464,23 +464,23 @@ class Satellite(Base):
                     myload = self.prepare_my_load_prediction()
                     my_real_load = np.array(myload[1])[1:]
                     my_potential_load = np.array(myload[2])[1:]
-                    print(f"[{candidate_id}] real:{my_real_load}")
-                    print(f"[{candidate_id}] fake:{my_potential_load}")
+             #       print(f"[{candidate_id}] real:{my_real_load}")
+             #       print(f"[{candidate_id}] fake:{my_potential_load}")
                     myload = my_real_load + PERCENT * my_potential_load
                     if myload[len(available_slots)-1] == 0:
                         myload = myload[:len(available_slots)-1]
-                    myload = self.extend_array(myload, len(available_slots))
+              #      myload = self.extend_array(myload, len(available_slots))
                     print(f"[{candidate_id}] toge:{myload}")
                     loads.append(myload)
                 else:
                     otherload = self.prepare_other_load_prediction(candidate_id)
                     other_real_load = np.array(otherload[1])[1:]
                     other_potential_load = np.array(otherload[2])[1:]
-                    print(f"[{candidate_id}] real:{other_real_load}")
-                    print(f"[{candidate_id}] fake:{other_potential_load}")
+              #      print(f"[{candidate_id}] real:{other_real_load}")
+              #      print(f"[{candidate_id}] fake:{other_potential_load}")
                     otherload = other_real_load + PERCENT * other_potential_load
                     otherload = self.extend_array(otherload, len(available_slots))
-                    print(f"[{candidate_id}] toge:{otherload}")
+              #      print(f"[{candidate_id}] toge:{otherload}")
                     loads.append(otherload)
             loads = np.array(loads)
             valid_indices = np.where(available_slots)[0]
@@ -490,13 +490,13 @@ class Satellite(Base):
             sorted_max_values = np.sort(max_values)
             threshold_value = sorted_max_values[num_smallest - 1]
             smallest_indices = np.where(max_values <= threshold_value)[0]
-            print(f"available slots: {smallest_indices}")
+            #print(f"available slots: {smallest_indices}")
             weights = np.arange(len(smallest_indices), 0, -1) ** BIAS_FACTOR
             weights = weights / np.sum(weights)
             random_min_index = np.random.choice(smallest_indices, p=weights)
             delay = valid_indices[random_min_index] + 1
-            print(f"delay: {delay}")
-            print("############################")
+            #print(f"delay: {delay}")
+            #print("############################")
         return int(delay)
 
     def decide_best_target(self, ueid):
