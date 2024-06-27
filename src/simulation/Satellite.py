@@ -406,8 +406,8 @@ class Satellite(Base):
             padding_length = length - current_length
             min_val = np.min(arry)
             max_val = np.max(arry)
-            padding_values = np.random.uniform(max_val/3, max_val, size=padding_length)
-            #padding_values = np.random.choice(list(set(arry)), size=padding_length)
+            #padding_values = np.random.uniform(max_val/3, max_val, size=padding_length)
+            padding_values = np.random.choice(list(set(arry)), size=padding_length)
             extended_array = np.concatenate((arry, padding_values))
             return extended_array
         else:
@@ -486,12 +486,14 @@ class Satellite(Base):
             valid_indices = np.where(available_slots)[0]
             A_valid = loads[:, valid_indices]
             max_values = np.max(A_valid, axis=0)
-            min_value = np.min(max_values)
-            min_indices = np.where(np.isclose(max_values, min_value))[0]
-            print(f"available slots: {min_indices}")
-            weights = np.arange(len(min_indices), 0, -1) ** BIAS_FACTOR
+            num_smallest = max(1, len(max_values) // SMALLEST_THRESHOLD_PERCENT)  # Ensure at least 1 is selected
+            sorted_max_values = np.sort(max_values)
+            threshold_value = sorted_max_values[num_smallest - 1]
+            smallest_indices = np.where(max_values <= threshold_value)[0]
+            print(f"available slots: {smallest_indices}")
+            weights = np.arange(len(smallest_indices), 0, -1) ** BIAS_FACTOR
             weights = weights / np.sum(weights)
-            random_min_index = np.random.choice(min_indices, p=weights)
+            random_min_index = np.random.choice(smallest_indices, p=weights)
             delay = valid_indices[random_min_index] + 1
             print(f"delay: {delay}")
             print("############################")
