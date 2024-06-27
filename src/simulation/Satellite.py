@@ -88,8 +88,8 @@ class Satellite(Base):
     def prepare_my_load_prediction(self):
 
         return (self.within_one_slot_load_priority,
-                self.predicted_my_load[self.env.now:self.env.now + LOAD_WINDOW_SIZE],
-                self.predicted_my_load_potential[self.env.now:self.env.now + LOAD_WINDOW_SIZE])
+                self.predicted_my_load[self.env.now:self.env.now + LOAD_WINDOW_SIZE + 1],
+                self.predicted_my_load_potential[self.env.now:self.env.now + LOAD_WINDOW_SIZE + 1])
 
     def prepare_other_load_prediction(self, satid):
         if satid not in self.load_aware:
@@ -406,8 +406,8 @@ class Satellite(Base):
             padding_length = length - current_length
             min_val = np.min(arry)
             max_val = np.max(arry)
-            padding_values = np.random.uniform(min_val, max_val, size=padding_length)
-            #padding_values = np.random.choice(arry, size=padding_length)
+            padding_values = np.random.uniform(max_val/3, max_val, size=padding_length)
+            #padding_values = np.random.choice(list(set(arry)), size=padding_length)
             extended_array = np.concatenate((arry, padding_values))
             return extended_array
         else:
@@ -467,7 +467,9 @@ class Satellite(Base):
                     print(f"[{candidate_id}] real:{my_real_load}")
                     print(f"[{candidate_id}] fake:{my_potential_load}")
                     myload = my_real_load + PERCENT * my_potential_load
-                    myload = myload[:len(available_slots)]
+                    if myload[len(available_slots)-1] == 0:
+                        myload = myload[:len(available_slots)-1]
+                    myload = self.extend_array(myload, len(available_slots))
                     print(f"[{candidate_id}] toge:{myload}")
                     loads.append(myload)
                 else:
@@ -478,7 +480,6 @@ class Satellite(Base):
                     print(f"[{candidate_id}] fake:{other_potential_load}")
                     otherload = other_real_load + PERCENT * other_potential_load
                     otherload = self.extend_array(otherload, len(available_slots))
-                    otherload = otherload[:len(available_slots)]
                     print(f"[{candidate_id}] toge:{otherload}")
                     loads.append(otherload)
             loads = np.array(loads)
