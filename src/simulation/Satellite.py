@@ -469,7 +469,7 @@ class Satellite(Base):
                     myload = my_real_load + PERCENT * my_potential_load
                     if myload[len(available_slots)-1] == 0:
                         myload = myload[:len(available_slots)-1]
-              #      myload = self.extend_array(myload, len(available_slots))
+                    myload = self.extend_array(myload, len(available_slots))
                     print(f"[{candidate_id}] toge:{myload}")
                     loads.append(myload)
                 else:
