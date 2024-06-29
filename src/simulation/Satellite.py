@@ -454,7 +454,7 @@ class Satellite(Base):
         if CANDIDATE_ALG == CANDIDATE_EARLIEST:
         #     # greedy
             delay = np.where(available_slots)[0][0] + 1
-        # if CANDIDATE_ALG == CANDIDATE_RANDOM:
+        if CANDIDATE_ALG == CANDIDATE_RANDOM:
         #     # random
             slotss = np.where(available_slots)[0]
             delay = random.choice(slotss) + 1
