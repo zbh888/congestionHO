@@ -454,9 +454,10 @@ class Satellite(Base):
         if CANDIDATE_ALG == CANDIDATE_EARLIEST:
         #     # greedy
             delay = np.where(available_slots)[0][0] + 1
-        # if CANDIDATE_ALG == CANDIDATE_ALG_RANDOM:
+        # if CANDIDATE_ALG == CANDIDATE_RANDOM:
         #     # random
-        #     delay = random.choice(available_slots) + 1
+            slotss = np.where(available_slots)[0]
+            delay = random.choice(slotss) + 1
         if CANDIDATE_ALG == CANDIDATE_OUR:
             np.set_printoptions(linewidth=np.inf)
             #print(f"{self.env.now} ############################")
