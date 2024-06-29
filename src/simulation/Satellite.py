@@ -444,7 +444,7 @@ class Satellite(Base):
     def decide_delay(self, ueid, sourceid, candidates, utilities):
         assert (self.access_Q.counter - self.access_Q.max_access_slots == self.env.now)
         available_slots = self.access_Q.available_slots()
-        if CANDIDATE_ALG == CANDIDATE_ALG_EARLIEST:
+        if CANDIDATE_ALG == CANDIDATE_EARLIEST:
         #     # greedy
             delay = available_slots.index(True) + 1
         # if CANDIDATE_ALG == CANDIDATE_ALG_RANDOM:
