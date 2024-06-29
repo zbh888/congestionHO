@@ -44,7 +44,7 @@ class UE(Base):
     # ====== UE functions ======
     def action_monitor(self):
         while True:
-            now = self.env.now
+            now = round(self.env.now)
             # ================================================
             next = now + 1
             # needs to send measurement report
@@ -65,7 +65,7 @@ class UE(Base):
                     "candidates": candidates.tolist(),
                     "utility": candidates_utilities,
                 }
-                yield self.env.timeout(random.random() * 0.0000001)
+                yield self.env.timeout(random.random() * 0.00000001)
                 self.send_message(
                     msg=data,
                     to=source
@@ -86,7 +86,6 @@ class UE(Base):
 
     def handle_messages(self):
         while True:
-            now = round(self.env.now)
             msg = yield self.messageQ.get()
             data = json.loads(msg)
             assert (data['to'] == self.identity)
@@ -97,6 +96,7 @@ class UE(Base):
                 # conditions = data['conditions'] # I expect we don't need it
                 targetid = data['suggested_target']
                 corresponding_delay = data['corresponding_delay']
+                now = round(self.env.now)
                 self.condition = UE_condition(targetid, corresponding_delay, now)
                 self.state = RRC_CONFIGURED
                 data = {
@@ -168,8 +168,9 @@ class UE(Base):
     #             return candidates
 
     def estimate_serving_length(self, satid):
+        now = round(self.env.now)
         # The returned value means from the current time + {return}, it will perform handover.
-        x, = np.where(self.coverage_info[self.identity, satid, self.env.now:] == 0)
+        x, = np.where(self.coverage_info[self.identity, satid, now:] == 0)
         if len(x) == 0:
             return random.randint(4000, 4500)
         else:

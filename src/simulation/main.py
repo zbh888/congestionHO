@@ -17,6 +17,7 @@ def initial_assignment(UEss, Satss, oracle):
             possible_satellites = np.where(C[ueid, :, 0] == 1)[0]
             assert (len(possible_satellites) > 0)
             satid = random.choice(possible_satellites)
+            satid = possible_satellites[0]
             ue.serving_satellite = Satss[satid]
             ue.serving_satellite_history.append(satid)
             serving_length = ue.estimate_serving_length(satid)
