@@ -65,6 +65,7 @@ class UE(Base):
                     "candidates": candidates.tolist(),
                     "utility": candidates_utilities,
                 }
+                yield self.env.timeout(random.random() * 0.0000001)
                 self.send_message(
                     msg=data,
                     to=source
@@ -85,6 +86,7 @@ class UE(Base):
 
     def handle_messages(self):
         while True:
+            now = round(self.env.now)
             msg = yield self.messageQ.get()
             data = json.loads(msg)
             assert (data['to'] == self.identity)
@@ -95,7 +97,7 @@ class UE(Base):
                 # conditions = data['conditions'] # I expect we don't need it
                 targetid = data['suggested_target']
                 corresponding_delay = data['corresponding_delay']
-                self.condition = UE_condition(targetid, corresponding_delay, self.env.now)
+                self.condition = UE_condition(targetid, corresponding_delay, now)
                 self.state = RRC_CONFIGURED
                 data = {
                     "task": RRC_RECONFIGURATION_COMPLETE,
@@ -115,7 +117,8 @@ class UE(Base):
                 self.condition = None
 
     def determine_if_access(self):
-        return self.condition.access_time == self.env.now
+        now = round(self.env.now)
+        return self.condition.access_time == now
 
     def prepare_candidates_utilities(self, candidates):
         candidate_utility = []
