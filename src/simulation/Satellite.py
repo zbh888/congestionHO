@@ -446,7 +446,7 @@ class Satellite(Base):
         available_slots = self.access_Q.available_slots()
         if CANDIDATE_ALG == CANDIDATE_EARLIEST:
         #     # greedy
-            delay = available_slots.index(True) + 1
+            delay = np.where(available_slots)[0][0] + 1
         # if CANDIDATE_ALG == CANDIDATE_ALG_RANDOM:
         #     # random
         #     delay = random.choice(available_slots) + 1
