@@ -81,7 +81,7 @@ class allCounters:
         for ueid in self.UEs:
             ue = self.UEs[ueid]
             total2.append(ue.access_time_history)
-        self.result['access_timeslot'] = total
+        self.result['access_timeslot'] = total2
 
     def give_result(self):
         with open(RESULT_PATH, 'wb') as file:
