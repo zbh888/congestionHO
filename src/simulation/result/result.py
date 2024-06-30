@@ -274,6 +274,15 @@ def side_effect_compute_UE_handover_cv(result):
     cv = coefficient_of_variation(total_access)
     return cv
 
+def side_effect_compute_average_serving_time(result):
+    access = result['access_timeslot']
+    total_serving_time = []
+    for u_access_list in access:
+        for i in range(len(u_access_list)-1):
+            total_serving_time.append(u_access_list[i+1] - u_access_list[i])
+    return np.mean(total_serving_time)
+
+
 
 def prepare_result(results, filter_flag, filter_threshold):
     busy_percent = 0.2
@@ -293,6 +302,7 @@ def prepare_result(results, filter_flag, filter_threshold):
         delay_mean = side_effect_compute_UE_access_mean(res)
         delay_cv = side_effect_compute_UE_access_cv(res)
         handover_cv = side_effect_compute_UE_handover_cv(res)
+        mean_serving = side_effect_compute_average_serving_time(res)
 
         results[setting]['maximum_signalling'] = maximum_signalling
         data.append((maximum_signalling, setting))
@@ -305,6 +315,7 @@ def prepare_result(results, filter_flag, filter_threshold):
         results[setting]['delay_mean'] = delay_mean
         results[setting]['delay_cv'] = delay_cv
         results[setting]['handover_cv'] = handover_cv
+        results[setting]['mean_serving'] = mean_serving
 
         with open(file_path, "a") as file:
             file.write(f"{setting[0]},")
@@ -396,27 +407,37 @@ def draw_prepared_result(results):
     sorted_data = []
     for element in sorted_objective_setting:
         res = results[element[1]]
-        sorted_data.append(res['handover_cv'])
-
-    # 绘制第一个图
-    sorted_data = []
-    for element in sorted_objective_setting:
-        res = results[element[1]]
-        sorted_data.append(res['handover_cv'])
+        sorted_data.append(res['mean_serving'])
     axes[1].bar(sorted_labels[:len(sorted_data)], sorted_data, color=colors, edgecolor='black')
     The_min = sorted_data[0]
     axes[1].axhline(y=The_min, color='yellow', linestyle='dotted', linewidth=2)
-    axes[1].set_title('(B) Handover count balance evaluation', fontweight='bold')
-    axes[1].set_ylabel('Coefficient of variation', fontweight='bold')
+    axes[1].set_title('(B) Average serving time evaluation', fontweight='bold')
+    axes[1].set_ylabel('Serving time length', fontweight='bold')
     axes[1].grid(True)
     for tick in axes[1].xaxis.get_major_ticks():
         tick.label.set_fontweight('bold')
     for tick in axes[1].yaxis.get_major_ticks():
         tick.label.set_fontweight('bold')
-    plt.tight_layout()
+
+    # # 绘制第一个图
+    # sorted_data = []
+    # for element in sorted_objective_setting:
+    #     res = results[element[1]]
+    #     sorted_data.append(res['handover_cv'])
+    # axes[1].bar(sorted_labels[:len(sorted_data)], sorted_data, color=colors, edgecolor='black')
+    # The_min = sorted_data[0]
+    # axes[1].axhline(y=The_min, color='yellow', linestyle='dotted', linewidth=2)
+    # axes[1].set_title('(B) Handover count balance evaluation', fontweight='bold')
+    # axes[1].set_ylabel('Coefficient of variation', fontweight='bold')
+    # axes[1].grid(True)
+    # for tick in axes[1].xaxis.get_major_ticks():
+    #     tick.label.set_fontweight('bold')
+    # for tick in axes[1].yaxis.get_major_ticks():
+    #     tick.label.set_fontweight('bold')
+    # plt.tight_layout()
 
     # Plotting side effects
-    print("The total signalling: the lower, the better")
+    # print("The total signalling: the lower, the better")
     # sorted_data = []
     # for element in sorted_objective_setting:
     #     res = results[element[1]]
@@ -486,62 +507,17 @@ def draw_prepared_result(results):
         res = results[element[1]]
         sorted_data.append(res['total_reservation'])
 
-    axes[0].bar(sorted_labels[:len(sorted_data)], sorted_data, color=colors, edgecolor='black')
-    The_min = sorted_data[0]
-    axes[0].axhline(y=The_min, color='yellow', linestyle='dotted', linewidth=2)
-    axes[0].set_title('(A) Total reservation time evaluation', fontweight='bold')
-    axes[0].set_ylabel('Total reservation time', fontweight='bold')
-    axes[0].grid(True)
-    for tick in axes[0].xaxis.get_major_ticks():
-        tick.label.set_fontweight('bold')
-    for tick in axes[0].yaxis.get_major_ticks():
-        tick.label.set_fontweight('bold')
-
-    sorted_data = []
-    for element in sorted_objective_setting:
-        res = results[element[1]]
-        sorted_data.append(res['reservation_balance_cv'])
-
-    # 绘制第一个图
     axes[1].bar(sorted_labels[:len(sorted_data)], sorted_data, color=colors, edgecolor='black')
     The_min = sorted_data[0]
     axes[1].axhline(y=The_min, color='yellow', linestyle='dotted', linewidth=2)
-    axes[1].set_title('(B) Total reservation share balance evaluation', fontweight='bold')
-    axes[1].set_ylabel('Coefficient of variation', fontweight='bold')
+    axes[1].set_title('(A) Total reservation time evaluation', fontweight='bold')
+    axes[1].set_ylabel('Total reservation time', fontweight='bold')
     axes[1].grid(True)
     for tick in axes[1].xaxis.get_major_ticks():
         tick.label.set_fontweight('bold')
     for tick in axes[1].yaxis.get_major_ticks():
         tick.label.set_fontweight('bold')
-    plt.tight_layout()
 
-    fig, axes = plt.subplots(1, 2, figsize=(9, 4))  # 1行2列的子图，设置总大小为6x3
-
-    # print("UE average access time: the lower, the better")
-    # sorted_data = []
-    # for element in sorted_objective_setting:
-    #     res = results[element[1]]
-    #     sorted_data.append(res['delay_mean'])
-    # plt.figure(figsize=(3, 2))
-    # plt.bar(sorted_labels[:len(sorted_data)], sorted_data, color='skyblue', edgecolor='black')
-    # plt.title('UE access time mean')
-    # plt.xlabel('Index')
-    # plt.ylabel('Time slot count')
-    # plt.grid(True)
-    # plt.show()
-
-    # print("UE access time balance: the lower, the better")
-    sorted_data = []
-    for element in sorted_objective_setting:
-        res = results[element[1]]
-        sorted_data.append(res['delay_cv'])
-    # plt.figure(figsize=(3, 2))
-    # plt.bar(sorted_labels[:len(sorted_data)], sorted_data, color='skyblue', edgecolor='black')
-    # plt.title('UE access time balance evaluation')
-    # plt.xlabel('Index')
-    # plt.ylabel('Coefficient of variation')
-    # plt.grid(True)
-    # plt.show()
     sorted_data = []
     for element in sorted_objective_setting:
         res = results[element[1]]
@@ -557,25 +533,85 @@ def draw_prepared_result(results):
         tick.label.set_fontweight('bold')
     for tick in axes[0].yaxis.get_major_ticks():
         tick.label.set_fontweight('bold')
-
-    sorted_data = []
-    for element in sorted_objective_setting:
-        res = results[element[1]]
-        sorted_data.append(res['reservation_balance_cv'])
-
-    # 绘制第一个图
-    sorted_data = []
-    for element in sorted_objective_setting:
-        res = results[element[1]]
-        sorted_data.append(res['delay_cv'])
-    axes[1].bar(sorted_labels[:len(sorted_data)], sorted_data, color=colors, edgecolor='black')
-    The_min = sorted_data[0]
-    axes[1].axhline(y=The_min, color='yellow', linestyle='dotted', linewidth=2)
-    axes[1].set_title('(B) Decouple time balance evaluation', fontweight='bold')
-    axes[1].set_ylabel('Coefficient of variation', fontweight='bold')
-    axes[1].grid(True)
-    for tick in axes[1].xaxis.get_major_ticks():
-        tick.label.set_fontweight('bold')
-    for tick in axes[1].yaxis.get_major_ticks():
-        tick.label.set_fontweight('bold')
     plt.tight_layout()
+    # sorted_data = []
+    # for element in sorted_objective_setting:
+    #     res = results[element[1]]
+    #     sorted_data.append(res['reservation_balance_cv'])
+
+    # # 绘制第一个图
+    # axes[1].bar(sorted_labels[:len(sorted_data)], sorted_data, color=colors, edgecolor='black')
+    # The_min = sorted_data[0]
+    # axes[1].axhline(y=The_min, color='yellow', linestyle='dotted', linewidth=2)
+    # axes[1].set_title('(B) Total reservation share balance evaluation', fontweight='bold')
+    # axes[1].set_ylabel('Coefficient of variation', fontweight='bold')
+    # axes[1].grid(True)
+    # for tick in axes[1].xaxis.get_major_ticks():
+    #     tick.label.set_fontweight('bold')
+    # for tick in axes[1].yaxis.get_major_ticks():
+    #     tick.label.set_fontweight('bold')
+
+    # fig, axes = plt.subplots(1, 2, figsize=(9, 4))  # 1行2列的子图，设置总大小为6x3
+
+    # print("UE average access time: the lower, the better")
+    # sorted_data = []
+    # for element in sorted_objective_setting:
+    #     res = results[element[1]]
+    #     sorted_data.append(res['delay_mean'])
+    # plt.figure(figsize=(3, 2))
+    # plt.bar(sorted_labels[:len(sorted_data)], sorted_data, color='skyblue', edgecolor='black')
+    # plt.title('UE access time mean')
+    # plt.xlabel('Index')
+    # plt.ylabel('Time slot count')
+    # plt.grid(True)
+    # plt.show()
+
+    # print("UE access time balance: the lower, the better")
+    # sorted_data = []
+    # for element in sorted_objective_setting:
+    #     res = results[element[1]]
+    #     sorted_data.append(res['delay_cv'])
+    # plt.figure(figsize=(3, 2))
+    # plt.bar(sorted_labels[:len(sorted_data)], sorted_data, color='skyblue', edgecolor='black')
+    # plt.title('UE access time balance evaluation')
+    # plt.xlabel('Index')
+    # plt.ylabel('Coefficient of variation')
+    # plt.grid(True)
+    # plt.show()
+    # sorted_data = []
+    # for element in sorted_objective_setting:
+    #     res = results[element[1]]
+    #     sorted_data.append(res['delay_mean'])
+
+    # axes[0].bar(sorted_labels[:len(sorted_data)], sorted_data, color=colors, edgecolor='black')
+    # The_min = sorted_data[0]
+    # axes[0].axhline(y=The_min, color='yellow', linestyle='dotted', linewidth=2)
+    # axes[0].set_title('(A) Average decouple time evaluation', fontweight='bold')
+    # axes[0].set_ylabel('Total reservation time', fontweight='bold')
+    # axes[0].grid(True)
+    # for tick in axes[0].xaxis.get_major_ticks():
+    #     tick.label.set_fontweight('bold')
+    # for tick in axes[0].yaxis.get_major_ticks():
+    #     tick.label.set_fontweight('bold')
+
+    # sorted_data = []
+    # for element in sorted_objective_setting:
+    #     res = results[element[1]]
+    #     sorted_data.append(res['reservation_balance_cv'])
+
+    # # 绘制第一个图
+    # sorted_data = []
+    # for element in sorted_objective_setting:
+    #     res = results[element[1]]
+    #     sorted_data.append(res['delay_cv'])
+    # axes[1].bar(sorted_labels[:len(sorted_data)], sorted_data, color=colors, edgecolor='black')
+    # The_min = sorted_data[0]
+    # axes[1].axhline(y=The_min, color='yellow', linestyle='dotted', linewidth=2)
+    # axes[1].set_title('(B) Decouple time balance evaluation', fontweight='bold')
+    # axes[1].set_ylabel('Coefficient of variation', fontweight='bold')
+    # axes[1].grid(True)
+    # for tick in axes[1].xaxis.get_major_ticks():
+    #     tick.label.set_fontweight('bold')
+    # for tick in axes[1].yaxis.get_major_ticks():
+    #     tick.label.set_fontweight('bold')
+    # plt.tight_layout()
