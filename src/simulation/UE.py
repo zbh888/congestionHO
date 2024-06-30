@@ -35,6 +35,8 @@ class UE(Base):
         # Logs
         self.serving_satellite_history = []
         self.applied_delay_history = []
+        self.measurement_time_history = []
+        self.access_time_history = []
 
         # Running Process
         env.process(self.init())
@@ -65,6 +67,7 @@ class UE(Base):
                     "candidates": candidates.tolist(),
                     "utility": candidates_utilities,
                 }
+                self.measurement_time_history.append(now)
                 self.send_message(
                     msg=data,
                     to=source
@@ -76,6 +79,7 @@ class UE(Base):
                     data = {
                         "task": RANDOM_ACCESS,
                     }
+                    self.access_time_history.append(now)
                     self.send_message(
                         msg=data,
                         to=target,
