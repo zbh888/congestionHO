@@ -108,28 +108,31 @@ def draw_busy_hour_distribution(results):
     plt.show()
 
 
-def draw_heatmap(results, interval):
+def draw_heatmap(results, interval, color):
     intermediate_res = {}
     maximum = 0
     minimum = sys.maxsize
     for setting in results:
-        legend = escape_underscores(setting)
         res = results[setting]
-        time_sat_matrix = res['time_sat_matrix']
-        N_SAT = time_sat_matrix.shape[0]
-        N_TIME = time_sat_matrix.shape[1]
-        assert (N_TIME % interval == 0)
-        total_slots = N_TIME // interval
-        res_reshaped = time_sat_matrix.reshape(N_SAT, total_slots, interval)
-        res_reshaped_result = np.sum(res_reshaped, axis=2)
-        intermediate_res[legend] = res_reshaped_result
-        maximum = max(np.max(res_reshaped_result), maximum)
-        minimum = min(np.min(res_reshaped_result), minimum)
+        legend = res['paper_label']
+        res = results[setting]
+        if res['paper_label'] == 'L\nC\nH' or res['paper_label'] == 'H':
+            time_sat_matrix = res['time_sat_matrix']
+            N_SAT = time_sat_matrix.shape[0]
+            N_TIME = time_sat_matrix.shape[1]
+            assert (N_TIME % interval == 0)
+            total_slots = N_TIME // interval
+            res_reshaped = time_sat_matrix.reshape(N_SAT, total_slots, interval)
+            res_reshaped_result = np.sum(res_reshaped, axis=2)
+            intermediate_res[legend] = res_reshaped_result
+            maximum = max(np.max(res_reshaped_result), maximum)
+            minimum = min(np.min(res_reshaped_result), minimum)
+
     fig, axes = plt.subplots(ncols=len(intermediate_res), figsize=(3 * len(intermediate_res), 3))
     if len(intermediate_res) == 1:
         axes = [axes]  # Ensure axes is a list if only one subplot
     for ax, (legend, data) in zip(axes, intermediate_res.items()):
-        sns.heatmap(data, ax=ax, vmin=minimum, vmax=maximum, cbar=False, cmap="YlGnBu", xticklabels=False,
+        sns.heatmap(data, ax=ax, vmin=minimum, vmax=maximum, cbar=False, cmap=color, xticklabels=False,
                     yticklabels=False)
         ax.set_title(legend)
     plt.tight_layout()
@@ -196,6 +199,9 @@ def draw_max_reservation(results):
 def main_objective_compute_max_signalling(result):
     time_sat_matrix = result['time_sat_matrix']
     maximum_signalling = np.max(time_sat_matrix)
+    max_index = np.where(time_sat_matrix == maximum_signalling)
+    max_index_tuple = list(zip(max_index[0], max_index[1]))
+    print(f"{result['paper_label']} Maximum signalling value: {maximum_signalling} at index {max_index_tuple}")
     return maximum_signalling
 
 
@@ -215,7 +221,7 @@ def side_effect_compute_busy_time_balance_cv(result, cutoff_percent):
     mask = time_sat_matrix >= cutoff
     count_greater_than_cutoff = np.sum(mask, axis=1)
     count_greater_than_cutoff_percent = count_greater_than_cutoff / np.sum(count_greater_than_cutoff)
-    sorted_data = np.sort(count_greater_than_cutoff_percent)[len(count_greater_than_cutoff_percent) // 2:]
+    sorted_data = np.sort(count_greater_than_cutoff_percent)[int(len(count_greater_than_cutoff_percent) // 1.25):]
     cv = coefficient_of_variation(sorted_data)
     return cv
 
@@ -259,6 +265,15 @@ def side_effect_compute_UE_access_cv(result):
     cv = coefficient_of_variation(total_access)
     return cv
 
+def side_effect_compute_UE_handover_cv(result):
+    total_access = []
+    UE_access_list = result['ue_delay_history']
+    count = 0
+    for list in UE_access_list:
+        total_access.append(len(list))
+    cv = coefficient_of_variation(total_access)
+    return cv
+
 
 def prepare_result(results, filter_flag, filter_threshold):
     busy_percent = 0.2
@@ -277,6 +292,7 @@ def prepare_result(results, filter_flag, filter_threshold):
         reservation_balance_cv = side_effect_compute_reservation_cv(res)
         delay_mean = side_effect_compute_UE_access_mean(res)
         delay_cv = side_effect_compute_UE_access_cv(res)
+        handover_cv = side_effect_compute_UE_handover_cv(res)
 
         results[setting]['maximum_signalling'] = maximum_signalling
         data.append((maximum_signalling, setting))
@@ -288,6 +304,7 @@ def prepare_result(results, filter_flag, filter_threshold):
         results[setting]['reservation_balance_cv'] = reservation_balance_cv
         results[setting]['delay_mean'] = delay_mean
         results[setting]['delay_cv'] = delay_cv
+        results[setting]['handover_cv'] = handover_cv
 
         with open(file_path, "a") as file:
             file.write(f"{setting[0]},")
@@ -328,25 +345,28 @@ def draw_prepared_result(results):
     order_setting = []
     for setting in results:
         res = results[setting]
-        order_setting.append((res['maximum_signalling'], setting))
+        order_setting.append((res['maximum_signalling'], setting, res['paper_label']))
     sorted_objective_setting = sorted(order_setting, key=lambda x: x[0])
-    sorted_settings = []
     sorted_colors = []
+    sorted_labels = []
     for index, element in enumerate(sorted_objective_setting):
-        setting = element[1]
-        sorted_settings.append(setting)
+        label = element[2]
+        sorted_labels.append(label)
         sorted_colors.append(colors[index])
-    sorted_labels = np.array([chr(i) for i in range(ord('A'), ord('Z') + 1)])
 
     # Plotting the main objective
     sorted_data = []
     for element in sorted_objective_setting:
         res = results[element[1]]
         sorted_data.append(res['maximum_signalling'])
-    plt.figure(figsize=(3, 2))
-    plt.bar(sorted_labels[:len(sorted_data)], sorted_data, color='skyblue', edgecolor='black')
-    plt.title('Maximum signalling')
-    plt.ylabel('Signalling count')
+    colors = ['yellow'] + ['skyblue'] * (len(sorted_data) - 1)
+    plt.figure(figsize=(6, 4))
+    plt.bar(sorted_labels[:len(sorted_data)], sorted_data, color=colors, edgecolor='black')
+    The_min = sorted_data[0]
+    plt.axhline(y=The_min, color='yellow', linestyle='dotted', linewidth=2)
+    plt.xticks(fontweight='bold')
+    plt.yticks(fontweight='bold')
+    plt.ylabel('Maximum signalling count', fontweight='bold')
     plt.grid(True)
 
     # Adjusting x-axis labels to make the bars more compact
@@ -355,43 +375,100 @@ def draw_prepared_result(results):
 
     plt.show()
 
-    # Plotting side effects
-    print("The total signalling: the lower, the better")
+    fig, axes = plt.subplots(1, 2, figsize=(9, 4))
+
     sorted_data = []
     for element in sorted_objective_setting:
         res = results[element[1]]
-        sorted_data.append(res['total_signalling'])
-    plt.figure(figsize=(3, 2))
-    plt.bar(sorted_labels[:len(sorted_data)], sorted_data, color='skyblue', edgecolor='black')
-    plt.title('Total Signalling')
-    plt.xlabel('Index')
-    plt.ylabel('Signalling count')
-    plt.grid(True)
-    plt.show()
+        sorted_data.append(res['total_handover'])
 
-    print("busy time slot shares: the lower, the better")
+    axes[0].bar(sorted_labels[:len(sorted_data)], sorted_data, color=colors, edgecolor='black')
+    The_min = sorted_data[0]
+    axes[0].axhline(y=The_min, color='yellow', linestyle='dotted', linewidth=2)
+    axes[0].set_title('(A) Total handover count evaluation', fontweight='bold')
+    axes[0].set_ylabel('Handover count', fontweight='bold')
+    axes[0].grid(True)
+    for tick in axes[0].xaxis.get_major_ticks():
+        tick.label.set_fontweight('bold')
+    for tick in axes[0].yaxis.get_major_ticks():
+        tick.label.set_fontweight('bold')
+
+    sorted_data = []
+    for element in sorted_objective_setting:
+        res = results[element[1]]
+        sorted_data.append(res['handover_cv'])
+
+    # 绘制第一个图
+    sorted_data = []
+    for element in sorted_objective_setting:
+        res = results[element[1]]
+        sorted_data.append(res['handover_cv'])
+    axes[1].bar(sorted_labels[:len(sorted_data)], sorted_data, color=colors, edgecolor='black')
+    The_min = sorted_data[0]
+    axes[1].axhline(y=The_min, color='yellow', linestyle='dotted', linewidth=2)
+    axes[1].set_title('(B) Handover count balance evaluation', fontweight='bold')
+    axes[1].set_ylabel('Coefficient of variation', fontweight='bold')
+    axes[1].grid(True)
+    for tick in axes[1].xaxis.get_major_ticks():
+        tick.label.set_fontweight('bold')
+    for tick in axes[1].yaxis.get_major_ticks():
+        tick.label.set_fontweight('bold')
+    plt.tight_layout()
+
+    # Plotting side effects
+    print("The total signalling: the lower, the better")
+    # sorted_data = []
+    # for element in sorted_objective_setting:
+    #     res = results[element[1]]
+    #     sorted_data.append(res['total_handover'])
+    # plt.figure(figsize=(3, 2))
+    # plt.bar(sorted_labels[:len(sorted_data)], sorted_data, color='skyblue', edgecolor='black')
+    # plt.title('total_handover')
+    # plt.xlabel('Index')
+    # plt.ylabel('Signalling count')
+    # plt.grid(True)
+    # plt.show()
+
     sorted_data = []
     for element in sorted_objective_setting:
         res = results[element[1]]
         sorted_data.append(res['busy_time_balance_cv'])
-    plt.figure(figsize=(3, 2))
-    plt.bar(sorted_labels[:len(sorted_data)], sorted_data, color='skyblue', edgecolor='black')
-    plt.title('Busy time slot shares balance evaluation')
-    plt.xlabel('Index')
-    plt.ylabel('Coefficient of variation')
-    plt.grid(True)
-    plt.show()
 
-    #
-    print("busy time slot signalling count confidence interval: the lower, the better")
     sorted_mean = []
     sorted_margin = []
     for element in sorted_objective_setting:
         res = results[element[1]]
         sorted_mean.append(res['signalling_mean'])
         sorted_margin.append(res['signalling_margin'])
-    plt.figure(figsize=(3, 2))
-    plt.bar(sorted_labels[:len(sorted_data)], sorted_mean, color='skyblue', edgecolor='black')
+
+    # 绘制子图
+    fig, axes = plt.subplots(1, 2, figsize=(9, 4))  # 1行2列的子图，设置总大小为6x3
+
+    axes[0].bar(sorted_labels[:len(sorted_mean)], sorted_mean, color=colors, edgecolor='black')
+    The_min = sorted_mean[0]
+    axes[0].axhline(y=The_min, color='yellow', linestyle='dotted', linewidth=2)
+    axes[0].set_title('(A) Busy time slot average evaluation', fontweight='bold')
+    axes[0].set_ylabel('Average signalling count', fontweight='bold')
+    axes[0].grid(True)
+    for tick in axes[0].xaxis.get_major_ticks():
+        tick.label.set_fontweight('bold')
+    for tick in axes[0].yaxis.get_major_ticks():
+        tick.label.set_fontweight('bold')
+
+    # 绘制第一个图
+    axes[1].bar(sorted_labels[:len(sorted_data)], sorted_data, color=colors, edgecolor='black')
+    The_min = sorted_data[0]
+    axes[1].axhline(y=The_min, color='yellow', linestyle='dotted', linewidth=2)
+    axes[1].set_title('(B) Busy time slot share balance evaluation', fontweight='bold')
+    axes[1].set_ylabel('Coefficient of variation', fontweight='bold')
+    axes[1].grid(True)
+    for tick in axes[1].xaxis.get_major_ticks():
+        tick.label.set_fontweight('bold')
+    for tick in axes[1].yaxis.get_major_ticks():
+        tick.label.set_fontweight('bold')
+    plt.tight_layout()
+
+
     # plt.figure(figsize=(12, 6))
     # plt.plot(sorted_mean, marker='o', linestyle='-')
     # plt.errorbar(range(len(sorted_mean)), sorted_mean, yerr=sorted_margin, fmt='o', ecolor='r', capsize=5)
@@ -399,59 +476,106 @@ def draw_prepared_result(results):
     # for i, (label, color) in enumerate(zip(sorted_labels, sorted_colors)):
     #     texts.append(plt.text(i, sorted_mean[i], label, fontsize=text_size, fontweight='bold', ha='right', va='bottom', color=color))
     # adjust_text(texts)
-    plt.xlabel('Index')
-    plt.ylabel('Mean Value')
-    plt.title('busy slot mean')
-    plt.grid(True)
-
-    print("Total reservation time: the lower, the better")
+    # plt.xlabel('Index')
+    # plt.ylabel('Mean Value')
+    # plt.title('busy slot mean')
+    # plt.grid(True)
+    fig, axes = plt.subplots(1, 2, figsize=(9, 4))  # 1行2列的子图，设置总大小为6x3
     sorted_data = []
     for element in sorted_objective_setting:
         res = results[element[1]]
         sorted_data.append(res['total_reservation'])
-    plt.figure(figsize=(3, 2))
-    plt.bar(sorted_labels[:len(sorted_data)], sorted_data, color='skyblue', edgecolor='black')
-    plt.title('Total reservation time')
-    plt.xlabel('Index')
-    plt.ylabel('Time slot count')
-    plt.grid(True)
-    plt.show()
 
-    print("Reservation time balance: the lower the better")
+    axes[0].bar(sorted_labels[:len(sorted_data)], sorted_data, color=colors, edgecolor='black')
+    The_min = sorted_data[0]
+    axes[0].axhline(y=The_min, color='yellow', linestyle='dotted', linewidth=2)
+    axes[0].set_title('(A) Total reservation time evaluation', fontweight='bold')
+    axes[0].set_ylabel('Total reservation time', fontweight='bold')
+    axes[0].grid(True)
+    for tick in axes[0].xaxis.get_major_ticks():
+        tick.label.set_fontweight('bold')
+    for tick in axes[0].yaxis.get_major_ticks():
+        tick.label.set_fontweight('bold')
+
     sorted_data = []
     for element in sorted_objective_setting:
         res = results[element[1]]
         sorted_data.append(res['reservation_balance_cv'])
-    plt.figure(figsize=(3, 2))
-    plt.bar(sorted_labels[:len(sorted_data)], sorted_data, color='skyblue', edgecolor='black')
-    plt.title('Reservation balance across satellites evaluation')
-    plt.xlabel('Index')
-    plt.ylabel('Coefficient of variation')
-    plt.grid(True)
-    plt.show()
 
-    print("UE average access time: the lower, the better")
-    sorted_data = []
-    for element in sorted_objective_setting:
-        res = results[element[1]]
-        sorted_data.append(res['delay_mean'])
-    plt.figure(figsize=(3, 2))
-    plt.bar(sorted_labels[:len(sorted_data)], sorted_data, color='skyblue', edgecolor='black')
-    plt.title('UE access time mean')
-    plt.xlabel('Index')
-    plt.ylabel('Time slot count')
-    plt.grid(True)
-    plt.show()
+    # 绘制第一个图
+    axes[1].bar(sorted_labels[:len(sorted_data)], sorted_data, color=colors, edgecolor='black')
+    The_min = sorted_data[0]
+    axes[1].axhline(y=The_min, color='yellow', linestyle='dotted', linewidth=2)
+    axes[1].set_title('(B) Total reservation share balance evaluation', fontweight='bold')
+    axes[1].set_ylabel('Coefficient of variation', fontweight='bold')
+    axes[1].grid(True)
+    for tick in axes[1].xaxis.get_major_ticks():
+        tick.label.set_fontweight('bold')
+    for tick in axes[1].yaxis.get_major_ticks():
+        tick.label.set_fontweight('bold')
+    plt.tight_layout()
 
-    print("UE access time balance: the lower, the better")
+    fig, axes = plt.subplots(1, 2, figsize=(9, 4))  # 1行2列的子图，设置总大小为6x3
+
+    # print("UE average access time: the lower, the better")
+    # sorted_data = []
+    # for element in sorted_objective_setting:
+    #     res = results[element[1]]
+    #     sorted_data.append(res['delay_mean'])
+    # plt.figure(figsize=(3, 2))
+    # plt.bar(sorted_labels[:len(sorted_data)], sorted_data, color='skyblue', edgecolor='black')
+    # plt.title('UE access time mean')
+    # plt.xlabel('Index')
+    # plt.ylabel('Time slot count')
+    # plt.grid(True)
+    # plt.show()
+
+    # print("UE access time balance: the lower, the better")
     sorted_data = []
     for element in sorted_objective_setting:
         res = results[element[1]]
         sorted_data.append(res['delay_cv'])
-    plt.figure(figsize=(3, 2))
-    plt.bar(sorted_labels[:len(sorted_data)], sorted_data, color='skyblue', edgecolor='black')
-    plt.title('UE access time balance evaluation')
-    plt.xlabel('Index')
-    plt.ylabel('Coefficient of variation')
-    plt.grid(True)
-    plt.show()
+    # plt.figure(figsize=(3, 2))
+    # plt.bar(sorted_labels[:len(sorted_data)], sorted_data, color='skyblue', edgecolor='black')
+    # plt.title('UE access time balance evaluation')
+    # plt.xlabel('Index')
+    # plt.ylabel('Coefficient of variation')
+    # plt.grid(True)
+    # plt.show()
+    sorted_data = []
+    for element in sorted_objective_setting:
+        res = results[element[1]]
+        sorted_data.append(res['delay_mean'])
+
+    axes[0].bar(sorted_labels[:len(sorted_data)], sorted_data, color=colors, edgecolor='black')
+    The_min = sorted_data[0]
+    axes[0].axhline(y=The_min, color='yellow', linestyle='dotted', linewidth=2)
+    axes[0].set_title('(A) Average decouple time evaluation', fontweight='bold')
+    axes[0].set_ylabel('Total reservation time', fontweight='bold')
+    axes[0].grid(True)
+    for tick in axes[0].xaxis.get_major_ticks():
+        tick.label.set_fontweight('bold')
+    for tick in axes[0].yaxis.get_major_ticks():
+        tick.label.set_fontweight('bold')
+
+    sorted_data = []
+    for element in sorted_objective_setting:
+        res = results[element[1]]
+        sorted_data.append(res['reservation_balance_cv'])
+
+    # 绘制第一个图
+    sorted_data = []
+    for element in sorted_objective_setting:
+        res = results[element[1]]
+        sorted_data.append(res['delay_cv'])
+    axes[1].bar(sorted_labels[:len(sorted_data)], sorted_data, color=colors, edgecolor='black')
+    The_min = sorted_data[0]
+    axes[1].axhline(y=The_min, color='yellow', linestyle='dotted', linewidth=2)
+    axes[1].set_title('(B) Decouple time balance evaluation', fontweight='bold')
+    axes[1].set_ylabel('Coefficient of variation', fontweight='bold')
+    axes[1].grid(True)
+    for tick in axes[1].xaxis.get_major_ticks():
+        tick.label.set_fontweight('bold')
+    for tick in axes[1].yaxis.get_major_ticks():
+        tick.label.set_fontweight('bold')
+    plt.tight_layout()
