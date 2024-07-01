@@ -18,6 +18,7 @@ class allCounters:
         self.generate_max_delay()
         self.generate_reservation_count()
         self.generate_access_record()
+        self.generate_UE_serving_time()
 
     def generate_access_record(self):
         data = []
@@ -68,6 +69,19 @@ class allCounters:
         plt.ylabel('Delay')
         plt.savefig('box.png')
         plt.close()
+
+    def generate_UE_serving_time(self):
+        total = []
+        for ueid in self.UEs:
+            ue = self.UEs[ueid]
+            total.append(ue.measurement_time_history)
+        self.result['measurement_timeslot'] = total
+
+        total2 = []
+        for ueid in self.UEs:
+            ue = self.UEs[ueid]
+            total2.append(ue.access_time_history)
+        self.result['access_timeslot'] = total2
 
     def give_result(self):
         with open(RESULT_PATH, 'wb') as file:
