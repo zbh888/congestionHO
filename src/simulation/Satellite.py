@@ -44,6 +44,7 @@ class Satellite(Base):
         self.oracle = oracle
         self.record_max_delay = 0  # may be removed, recording the largest delay returned, not apply to RANDOM
         self.reservation_count = 0
+        self.reservation_total_time = 0 # time_handover_request - time_handover_cancel
 
         # === source function ===
         # condition_record[ueid] stores the received conditions from candidates ([Sat_condition, ..., Sat_condition])
@@ -162,6 +163,7 @@ class Satellite(Base):
                     to=source
                 )
                 # upon receiving random access, the target delete the condition record and take over UE
+                self.reservation_total_time += (self.env.now - self.takeover_condition_record[ueid].issue_time)
                 del self.takeover_condition_record[ueid]
             # ================================================ Source
             elif task == HANDOVER_SUCCESS:
@@ -212,6 +214,7 @@ class Satellite(Base):
             elif task == HANDOVER_CANCEL:
                 ueid = data['ueid']
                 # upon receving handover cancel, the candidate remove the UE's record
+                self.reservation_total_time += (self.env.now - self.takeover_condition_record[ueid].issue_time)
                 del self.takeover_condition_record[ueid]
                 self.access_Q.release_resource(ueid)
             elif task == PATH_SWITCH_REQUEST_ACK:
@@ -288,7 +291,7 @@ class Satellite(Base):
         if self.env.now + delay < self.DURATION:
             assert (self.coverage_info[ueid, self.identity, self.env.now + delay] == 1)
         condition = Sat_condition(access_delay=delay, ueid=ueid, satid=self.identity, sourceid=sourceid,
-                                  ue_utility=ue_utility)
+                                  ue_utility=ue_utility, issue_time=self.env.now)
         self.access_Q.insert(ueid, delay)
         self.record_max_delay = max(self.record_max_delay, delay)
         return condition
