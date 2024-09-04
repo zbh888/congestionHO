@@ -45,6 +45,7 @@ class Satellite(Base):
         self.oracle = oracle
         self.record_max_delay = 0  # may be removed, recording the largest delay returned, not apply to RANDOM
         self.reservation_count = 0
+        self.reservation_total_time = 0
 
         # === source function ===
         # condition_record[ueid] stores the received conditions from candidates ([Sat_condition, ..., Sat_condition])
@@ -297,6 +298,7 @@ class Satellite(Base):
                     to=source
                 )
                 # upon receiving random access, the target delete the condition record and take over UE
+                self.reservation_total_time += (round(self.env.now) - self.takeover_condition_record[ueid].issue_time)
                 del self.takeover_condition_record[ueid]
             # ================================================ Source
             elif task == HANDOVER_SUCCESS:
@@ -351,6 +353,7 @@ class Satellite(Base):
                 ueid = data['ueid']
                 expected_access_time, expected_leaving_time = self.estimated_access_handover_precise_time(ueid)
                 # upon receving handover cancel, the candidate remove the UE's record
+                self.reservation_total_time += (round(self.env.now) - self.takeover_condition_record[ueid].issue_time)
                 del self.takeover_condition_record[ueid]
                 self.access_Q.release_resource(ueid)
                 self.increment_my_load(now, 1)
@@ -389,7 +392,7 @@ class Satellite(Base):
         condition = Sat_condition(access_delay=delay, ueid=ueid, satid=self.identity, sourceid=sourceid,
                                   ue_utility=ue_utility,
                                   future_potential_load=self.predicted_my_load_potential[expected_leaving_time],
-                                  future_real_load=self.predicted_my_load[expected_leaving_time])
+                                  future_real_load=self.predicted_my_load[expected_leaving_time], issue_time=round(self.env.now))
         self.access_Q.insert(ueid, delay)
         self.record_max_delay = max(self.record_max_delay, delay)
         return condition

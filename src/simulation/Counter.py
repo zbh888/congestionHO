@@ -19,6 +19,13 @@ class allCounters:
         self.generate_reservation_count()
         self.generate_access_record()
         self.generate_UE_serving_time()
+        self.generate_reservation_time()
+
+    def generate_reservation_time(self):
+        reservation_total_time = []
+        for satid in self.satellites:
+            reservation_total_time.append(self.satellites[satid].reservation_total_time)
+        self.result['reservation_total_time'] = reservation_total_time
 
     def generate_access_record(self):
         data = []
