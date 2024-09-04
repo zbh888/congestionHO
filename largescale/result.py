@@ -239,7 +239,7 @@ def side_effect_compute_busy_time_confidence(result, cutoff_percent):
 
 def side_effect_compute_total_reservation(result):
     print("1234")
-    reservation_list = result['reservation_total_time1']
+    reservation_list = result['reservation_total_time']
     return np.sum(reservation_list)
 
 
