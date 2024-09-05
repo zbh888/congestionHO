@@ -238,9 +238,9 @@ def side_effect_compute_busy_time_confidence(result, cutoff_percent):
 
 
 def side_effect_compute_total_reservation(result):
-    print("1234")
+    print("12345")
     reservation_list = result['reservation_total_time']
-    return np.sum(reservation_list)
+    return np.max(reservation_list)
 
 
 def side_effect_compute_reservation_cv(result):
